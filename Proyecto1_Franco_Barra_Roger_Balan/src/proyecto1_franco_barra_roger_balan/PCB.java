@@ -37,7 +37,7 @@ public class PCB {
     
     // --- 6. Métricas de Rendimiento ---
     private long tiempoFinalizacion = 0;        
-    private long tiempoRespuesta = 0;           // Tiempo de la primera ejecución (First Run)
+    private long tiempoRespuesta = -1;           // Tiempo de la primera ejecución (First Run)
     private long tiempoEsperaAcumulado = 0;     // Tiempo total en la Ready Queue
     private long tiempoEnCPUAcumulado = 0;      // Tiempo total en la CPU
     private long tiempoEnBloqueadoAcumulado = 0; // Tiempo total en la Blocked Queue
@@ -100,7 +100,7 @@ public class PCB {
      * @param cycle El ciclo global.
      */
     public void setTiempoRespuesta(long cycle) {
-        if (this.tiempoRespuesta == 0) {
+        if (this.tiempoRespuesta == -1) {
             this.tiempoRespuesta = cycle;
         }
     }

@@ -303,8 +303,10 @@ public class SistemaOperativo implements Runnable {
             
             // Registrar métricas
             if (nextPcb.getTiempoRespuesta() == -1) {
+                
                 nextPcb.setTiempoRespuesta(globalClock);
             }
+
         }
     }
     
