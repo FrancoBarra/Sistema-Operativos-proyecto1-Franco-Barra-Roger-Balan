@@ -10,7 +10,7 @@ package proyecto1_franco_barra_roger_balan;
 public class Scheduler {
 
     /**
-     * Enumeración SchedulingAlgorithm: Define las 7 políticas de planificación.
+     * Enumeración SchedulingAlgorithm: Define las 6 políticas de planificación requeridas.
      */
     public static enum SchedulingAlgorithm {
         FCFS,           // First-Come, First-Served
@@ -18,128 +18,221 @@ public class Scheduler {
         SJF_PREEMPTIVE,     // Shortest Remaining Time First (SRTF) (Apropiativo)
         ROUND_ROBIN,    // Round Robin
         PRIORITY_NON_PREEMPTIVE, // Prioridad (No Apropiativo)
-        PRIORITY_PREEMPTIVE,     // Prioridad (Apropiativo)
-        HRRN           // Highest Response Ratio Next
+        PRIORITY_PREEMPTIVE      // Prioridad (Apropiativo)
     }
 
-    private final Cola readyQueue;
+    private Cola readyQueue;
     private SchedulingAlgorithm activeAlgorithm;
-    private final int timeQuantum; // Quantum de tiempo para Round Robin
+    private int timeQuantum;
 
     /**
      * Constructor
-     * @param readyQueue La instancia de la Cola de Listos.
-     * @param initialAlgorithm El algoritmo inicial.
-     * @param quantumSize El tamaño del quantum.
      */
-    public Scheduler(Cola readyQueue, SchedulingAlgorithm initialAlgorithm, int quantumSize) {
+    public Scheduler(Cola readyQueue, SchedulingAlgorithm initialAlgorithm, int quantum) {
         this.readyQueue = readyQueue;
         this.activeAlgorithm = initialAlgorithm;
-        this.timeQuantum = quantumSize;
+        this.timeQuantum = quantum;
     }
 
     /**
-     * Método principal para seleccionar el próximo PCB a despachar a la CPU.
-     * @param globalClock El ciclo actual del SO (necesario para HRRN).
-     * @return El PCB seleccionado y *removido* de la cola de listos, o null.
+     * NUEVO MÉTODO: Determina si el algoritmo actual es apropiativo
+     * @return true si el algoritmo es apropiativo, false en caso contrario
      */
-    public PCB schedule(long globalClock) {
+    public boolean isPreemptive() {
+        switch (activeAlgorithm) {
+            case SJF_PREEMPTIVE:
+            case PRIORITY_PREEMPTIVE:
+            case ROUND_ROBIN:
+                return true;
+            case FCFS:
+            case SJF_NON_PREEMPTIVE:
+            case PRIORITY_NON_PREEMPTIVE:
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Método principal: Selecciona el próximo PCB para la CPU
+     * basado en el algoritmo activo.
+     * @return El PCB seleccionado para ejecución o null si la cola está vacía.
+     */
+    public PCB selectNextProcess() {
         if (readyQueue.isEmpty()) {
             return null;
         }
 
-        PCB selectedPcb = null;
-
         switch (activeAlgorithm) {
             case FCFS:
-            case ROUND_ROBIN:
-                // FCFS/Round Robin: Sacar el proceso del frente (FIFO)
-                selectedPcb = readyQueue.sacar(); 
-                break;
-
+                return _selectFCFS();
             case SJF_NON_PREEMPTIVE:
-            case SJF_PREEMPTIVE: 
+            case SJF_PREEMPTIVE:
+                return _selectSJF(); 
+            case ROUND_ROBIN:
+                return _selectRoundRobin();
             case PRIORITY_NON_PREEMPTIVE:
             case PRIORITY_PREEMPTIVE:
-            case HRRN:
-                // Algoritmos que requieren buscar, encontrar y remover.
-                selectedPcb = _selectAdvancedPolicy(globalClock);
-                break;
+                return _selectPriority();
+            default:
+                return _selectFCFS(); 
         }
-        
-        return selectedPcb;
     }
-
-    /**
-     * Lógica para SJF/SRT, HRRN, y Prioridad.
-     * Itera la cola para encontrar el mejor PCB, lo remueve de la cola y lo retorna.
-     */
-    private PCB _selectAdvancedPolicy(long globalClock) {
-        PCB bestPcb = null;
-        // Se usa INT_MAX para buscar el menor (tiempo), y -1.0 para buscar el mayor (ratio).
-        int bestMetric = Integer.MAX_VALUE; 
-        double bestRatio = -1.0; 
-
+    
+    // --- Métodos de Implementación de Algoritmos ---
+    
+    private PCB _selectFCFS() {
+        return readyQueue.verFrente(); 
+    }
+    
+    private PCB _selectSJF() {
+        if (readyQueue.isEmpty()) return null;
+        
         Node current = readyQueue.getHead();
-
+        PCB shortestJob = current.getPcb();
+        Node shortestNode = current;
+        
+        // Buscar el proceso con menor cantidad de ciclos restantes
         while (current != null) {
-            PCB pcb = current.getPcb();
-
-            switch (activeAlgorithm) {
-                case SJF_NON_PREEMPTIVE:
-                case SJF_PREEMPTIVE:
-                    // Criterio: Menor cantidad de ciclos restantes (Shortest Remaining Time)
-                    if (pcb.getCiclosRestantes() < bestMetric) {
-                        bestMetric = pcb.getCiclosRestantes();
-                        bestPcb = pcb;
-                    }
-                    break;
-                case PRIORITY_NON_PREEMPTIVE:
-                case PRIORITY_PREEMPTIVE:
-                    // Criterio: Mayor prioridad (asumiendo que un valor *más alto* es mejor)
-                    if (pcb.getPriority() > bestMetric) {
-                        bestMetric = pcb.getPriority();
-                        bestPcb = pcb;
-                    }
-                    break;
-                case HRRN:
-                    // Criterio: Mayor Ratio de Respuesta (R = (W + S) / S)
-                    
-                    // W (Waiting Time) = Ciclo Actual - Tiempo Llegada - Tiempo Ejecutado
-                    long waitingTime = globalClock - pcb.getArrivalTime() - pcb.getTiempoEnCPUAcumulado();
-                    int ciclosRestantes = pcb.getCiclosRestantes(); 
-                    
-                    if (ciclosRestantes > 0) {
-                        double responseRatio = (double)(waitingTime + ciclosRestantes) / ciclosRestantes;
-                        
-                        if (responseRatio > bestRatio) {
-                            bestRatio = responseRatio;
-                            bestPcb = pcb;
-                        }
-                    }
-                    break;
+            PCB currentPCB = current.getPcb();
+            if (currentPCB.getCiclosRestantes() < shortestJob.getCiclosRestantes()) {
+                shortestJob = currentPCB;
+                shortestNode = current;
             }
             current = current.getNext();
         }
-
-        // Una vez encontrado el mejor PCB, lo REMOVEMOS de la cola usando su ID.
-        if (bestPcb != null) {
-            return readyQueue.removerPorId(bestPcb.getId());
+        
+        // Remover el proceso seleccionado de la cola
+        if (shortestNode == readyQueue.getHead()) {
+            // Si es el primero, usar sacar() para eficiencia
+            return readyQueue.sacar();
+        } else {
+            // Si no es el primero, remover por ID
+            return readyQueue.removerPorId(shortestJob.getId());
         }
-        return null;
+    }
+    
+    private PCB _selectRoundRobin() {
+        return readyQueue.verFrente();
+    }
+    
+    private PCB _selectPriority() {
+        if (readyQueue.isEmpty()) return null;
+        
+        Node current = readyQueue.getHead();
+        PCB highestPriority = current.getPcb();
+        Node highestNode = current;
+        
+        // Buscar el proceso con mayor prioridad (número más bajo = mayor prioridad)
+        while (current != null) {
+            PCB currentPCB = current.getPcb();
+            if (currentPCB.getPriority() < highestPriority.getPriority()) {
+                highestPriority = currentPCB;
+                highestNode = current;
+            }
+            current = current.getNext();
+        }
+        
+        // Remover el proceso seleccionado de la cola
+        if (highestNode == readyQueue.getHead()) {
+            return readyQueue.sacar();
+        } else {
+            return readyQueue.removerPorId(highestPriority.getId());
+        }
     }
     
     /**
      * Reinserta un proceso en la Cola de Listos después de desalojo o E/S.
+     * @param pcb El proceso a reinsertar.
      */
     public void reinsertProcess(PCB pcb) {
+        // Aseguramos que el estado sea 'READY' antes de reinsertar
         pcb.setStatus(ProcessStatus.READY); 
         
-        // Simplemente se agrega al final. 
-        // Para FCFS/RR es correcto. Para los demás, el próximo 'schedule' elegirá el mejor.
-        readyQueue.agregar(pcb); 
+        if (activeAlgorithm == SchedulingAlgorithm.ROUND_ROBIN) {
+            // El proceso desalojado vuelve al final.
+            readyQueue.agregar(pcb);
+        } else if (activeAlgorithm == SchedulingAlgorithm.SJF_NON_PREEMPTIVE || 
+                   activeAlgorithm == SchedulingAlgorithm.SJF_PREEMPTIVE) {
+            // Para SJF, insertar manteniendo orden por ciclos restantes
+            _insertOrderedByCycles(pcb);
+        } else if (activeAlgorithm == SchedulingAlgorithm.PRIORITY_NON_PREEMPTIVE || 
+                   activeAlgorithm == SchedulingAlgorithm.PRIORITY_PREEMPTIVE) {
+            // Para Prioridad, insertar manteniendo orden por prioridad
+            _insertOrderedByPriority(pcb);
+        } else {
+            // FCFS y por defecto: insertar al final
+            readyQueue.agregar(pcb);
+        }
     }
-
+    
+    /**
+     * Inserta un PCB en la cola ordenado por ciclos restantes (para SJF)
+     */
+    private void _insertOrderedByCycles(PCB pcb) {
+        if (readyQueue.isEmpty()) {
+            readyQueue.agregar(pcb);
+            return;
+        }
+        
+        Node newNode = new Node(pcb);
+        Node current = readyQueue.getHead();
+        Node previous = null;
+        
+        while (current != null && current.getPcb().getCiclosRestantes() <= pcb.getCiclosRestantes()) {
+            previous = current;
+            current = current.getNext();
+        }
+        
+        if (previous == null) {
+            // Insertar al inicio
+            newNode.setNext(readyQueue.getHead());
+            // Necesitaríamos acceso directo a head aquí - por simplicidad, agregamos al final
+            readyQueue.agregar(pcb);
+        } else {
+            // Insertar en medio
+            newNode.setNext(current);
+            previous.setNext(newNode);
+            if (current == null) {
+                // Actualizar tail si se inserta al final
+                // Necesitaríamos acceso a tail - por simplicidad, usar agregar normal
+                readyQueue.agregar(pcb);
+            }
+        }
+    }
+    
+    /**
+     * Inserta un PCB en la cola ordenado por prioridad (para Priority)
+     */
+    private void _insertOrderedByPriority(PCB pcb) {
+        if (readyQueue.isEmpty()) {
+            readyQueue.agregar(pcb);
+            return;
+        }
+        
+        Node newNode = new Node(pcb);
+        Node current = readyQueue.getHead();
+        Node previous = null;
+        
+        while (current != null && current.getPcb().getPriority() <= pcb.getPriority()) {
+            previous = current;
+            current = current.getNext();
+        }
+        
+        if (previous == null) {
+            // Insertar al inicio
+            newNode.setNext(readyQueue.getHead());
+            // Por simplicidad, usar agregar normal
+            readyQueue.agregar(pcb);
+        } else {
+            // Insertar en medio
+            newNode.setNext(current);
+            previous.setNext(newNode);
+            if (current == null) {
+                // Actualizar tail si se inserta al final
+                readyQueue.agregar(pcb);
+            }
+        }
+    }
 
     // --- Getters y Setters para configuración dinámica ---
     
@@ -149,5 +242,20 @@ public class Scheduler {
 
     public SchedulingAlgorithm getActiveAlgorithm() {
         return activeAlgorithm;
+    }
+
+    public int getTimeQuantum() {
+        return timeQuantum;
+    }
+
+    public void setTimeQuantum(int timeQuantum) {
+        this.timeQuantum = timeQuantum;
+    }
+    
+    /**
+     * NUEVO MÉTODO: Retorna el tamaño actual de la cola de listos
+     */
+    public int getReadyQueueSize() {
+        return readyQueue.getSize();
     }
 }

@@ -121,7 +121,7 @@ public class PCB {
         this.tiempoEsperaAcumulado++; 
     }
     
-    public void incrementarTiempoEnCPU() { 
+    public void incrementarTiempoCPU() { 
         this.tiempoEnCPUAcumulado++; 
     }
     
@@ -163,4 +163,26 @@ public class PCB {
         // Tiempo de Retorno Ponderado = Turnaround Time / Longitud del Programa
         return (double)getTurnaroundTime() / this.longitudPrograma;
     }
+    public void executeInstruction() {
+    if (this.ciclosRestantes > 0) {
+        this.programCounter++;
+        this.memoryAddressRegister++;
+        this.ciclosRestantes--;
+    }
+}
+
+/**
+ * Incrementa solo el Program Counter (para métricas)
+ */
+
+/**
+ * Incrementa solo el Memory Address Register (para métricas)  
+ */
+public void incrementarMemoryAddressRegister() {
+    this.memoryAddressRegister++;
+}
+
+/**
+ * Decrementa los ciclos restantes (para métricas)
+ */
 }

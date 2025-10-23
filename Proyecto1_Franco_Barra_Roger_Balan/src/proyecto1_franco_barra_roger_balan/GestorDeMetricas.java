@@ -9,123 +9,107 @@ package proyecto1_franco_barra_roger_balan;
  * Registra tiempos de CPU, tiempos de Kernel y acumula los PCBs terminados.
  */
 public class GestorDeMetricas {
-
-    // --- Contadores Globales ---
-    private long ciclosKernel = 0;        // Tiempo que el SO pasó en planificación/dispatch/manejo de I/O.
-    private long ciclosCPUInactiva = 0;   // Tiempo que la CPU pasó en estado Idle.
     
-    // --- Almacenamiento de Terminados (Sin usar java.util.List) ---
+    // Almacenamiento de los PCBs terminados (sin usar java.util.List)
     private static final int MAX_PROCESOS = 100;
     private final PCB[] pcbsTerminados;
-    private int contadorTerminados; 
+    private int contadorTerminados;
+    
+    // Métricas de la Simulación Global
+    private long ciclosTotales = 0;
+    private long ciclosCPUInactiva = 0;
+    private long ciclosKernelCPU = 0;
 
     public GestorDeMetricas() {
         this.pcbsTerminados = new PCB[MAX_PROCESOS];
         this.contadorTerminados = 0;
     }
-
-    // =========================================================================
-    // --- Incrementadores de Contadores Globales (Usados por SistemaOperativo) ---
-    // =========================================================================
-
-    /**
-     * Incrementa el contador cuando el Kernel está trabajando (e.g., dispatch, interrupciones).
-     */
-    public void incrementarCiclosKernel() {
-        this.ciclosKernel++;
-    }
-
-    /**
-     * Incrementa el contador cuando la CPU está libre (no hay procesos listos).
-     */
-    public void incrementarCiclosCPUInactiva() {
-        this.ciclosCPUInactiva++;
-    }
-
-    // =========================================================================
-    // --- Gestión de Procesos Terminados (Usado por SistemaOperativo) ---
-    // =========================================================================
     
     /**
-     * Registra un PCB terminado para el cálculo de métricas finales.
-     * @param pcb El proceso cuyo estado es TERMINATED.
+     * Registra un PCB terminado para el cálculo de métricas.
+     * Se llama desde SistemaOperativo.handleDesalojo() cuando un proceso termina.
      */
     public void agregarPCBTerminado(PCB pcb) {
-        if (pcb.getStatus() == ProcessStatus.TERMINATED && contadorTerminados < MAX_PROCESOS) {
-            this.pcbsTerminados[contadorTerminados] = pcb;
-            this.contadorTerminados++;
+        if (contadorTerminados < MAX_PROCESOS) {
+            pcbsTerminados[contadorTerminados++] = pcb;
         }
     }
     
-    // =========================================================================
-    // --- Getters de Métricas (Para la GUI o Reportes) ---
-    // =========================================================================
-
-    public long getCiclosKernel() {
-        return ciclosKernel;
-    }
-
-    public long getCiclosCPUInactiva() {
-        return ciclosCPUInactiva;
-    }
-
-    public int getContadorTerminados() {
-        return contadorTerminados;
-    }
-
-    public PCB[] getPcbsTerminados() {
-        return pcbsTerminados; // Retorna el array completo
-    }
-
-    // =========================================================================
-    // --- Métodos de Cálculo de Métricas Finales ---
-    // =========================================================================
-    
     /**
-     * **Métrica de Utilización de CPU**
-     * Porcentaje de tiempo que la CPU estuvo ejecutando (Modo Usuario).
+     * Se llama en cada ciclo de la simulación para rastrear la actividad de la CPU.
+     * @param relojActual El ciclo global actual.
+     * @param estaCPUInactiva True si la CPU no está ejecutando nada.
+     * @param estaCPUEnModoKernel True si el SO está en modo kernel (planificación/dispatch).
      */
-    public double calcularUtilizacionCPU(long ciclosTotales) {
+    public void actualizarMetricasGlobales(long relojActual, boolean estaCPUInactiva, boolean estaCPUEnModoKernel) {
+        this.ciclosTotales = relojActual;
+        if (estaCPUInactiva) {
+            this.ciclosCPUInactiva++;
+        }
+        if (estaCPUEnModoKernel) {
+            this.ciclosKernelCPU++;
+        }
+    }
+
+    // =========================================================================
+    // MÉTODOS DE CÁLCULO DE MÉTRICAS FINALES
+    // =========================================================================
+
+    /**
+     * Procesos Completados por unidad de tiempo (Throughput).
+     * @return Throughput en procesos por ciclo
+     */
+    public double calcularThroughput() {
         if (ciclosTotales == 0) return 0.0;
-        
-        // Tiempo en Modo Usuario = Ciclos Totales - (Kernel Time + Idle Time)
-        long ciclosUsuario = ciclosTotales - ciclosKernel - ciclosCPUInactiva;
-        return (double) ciclosUsuario / ciclosTotales;
+        return (double) contadorTerminados / ciclosTotales;
     }
     
     /**
-     * **Métrica de Tiempo de Retorno Promedio (Turnaround Time)**
-     * Tiempo promedio que un proceso tardó en completarse (desde llegada hasta terminación).
+     * Utilización del Procesador.
+     * Utilización = (Ciclos Totales - Ciclos Inactivos) / Ciclos Totales
+     * @return Porcentaje de utilización (0.0 a 1.0)
+     */
+    public double calcularUtilizacionCPU() {
+        if (ciclosTotales == 0) return 0.0;
+        long ciclosUtilizados = ciclosTotales - ciclosCPUInactiva;
+        return (double) ciclosUtilizados / ciclosTotales;
+    }
+
+    /**
+     * Tiempo de Retorno (Turnaround Time) Promedio.
+     * TR = Tiempo de Finalización - Tiempo de Llegada
+     * @return Tiempo de retorno promedio en ciclos
      */
     public double calcularTiempoDeRetornoPromedio() {
         if (contadorTerminados == 0) return 0.0;
         
-        long tiempoTotal = 0;
+        long tiempoRetornoTotal = 0;
         for (int i = 0; i < contadorTerminados; i++) {
             PCB pcb = pcbsTerminados[i];
-            tiempoTotal += pcb.getTurnaroundTime(); 
+            tiempoRetornoTotal += (pcb.getTiempoFinalizacion() - pcb.getArrivalTime()); 
         }
-        return (double) tiempoTotal / contadorTerminados;
+        return (double) tiempoRetornoTotal / contadorTerminados;
     }
     
     /**
-     * **Métrica de Tiempo de Espera Promedio (Waiting Time)**
-     * Tiempo promedio que un proceso pasó en la Ready Queue.
+     * Tiempo de Espera (Waiting Time) Promedio.
+     * Tiempo acumulado en la Ready Queue.
+     * @return Tiempo de espera promedio en ciclos
      */
     public double calcularTiempoDeEsperaPromedio() {
         if (contadorTerminados == 0) return 0.0;
         
-        long tiempoTotal = 0;
+        long tiempoEsperaTotal = 0;
         for (int i = 0; i < contadorTerminados; i++) {
-            PCB pcb = pcbsTerminados[i];
-            tiempoTotal += pcb.getTiempoEsperaAcumulado(); 
+            tiempoEsperaTotal += pcbsTerminados[i].getTiempoEsperaAcumulado(); 
         }
-        return (double) tiempoTotal / contadorTerminados;
+        return (double) tiempoEsperaTotal / contadorTerminados;
     }
     
     /**
-     * **Métrica de Tiempo de Respuesta Promedio (Response Time)**
-     * Tiempo promedio desde la llegada hasta la primera ejecución (First Run).
+     * Tiempo de Respuesta (Response Time) Promedio.
+     * TR = Tiempo de Primera Ejecución - Tiempo de Llegada
+     * @return Tiempo de respuesta promedio en ciclos
      */
     public double calcularTiempoDeRespuestaPromedio() {
         if (contadorTerminados == 0) return 0.0;
@@ -135,14 +119,78 @@ public class GestorDeMetricas {
         
         for (int i = 0; i < contadorTerminados; i++) {
             PCB pcb = pcbsTerminados[i];
-            // Solo se cuenta si el tiempo de respuesta fue registrado (tiempoRespuesta > 0)
-            if (pcb.getTiempoRespuesta() > 0) {
-                 // Tiempo de Respuesta = Primera Ejecución - Llegada
+            if (pcb.getTiempoRespuesta() != -1) { 
                  tiempoRespuestaTotal += (pcb.getTiempoRespuesta() - pcb.getArrivalTime());
                  contadorRespondidos++;
             }
         }
+        
         if (contadorRespondidos == 0) return 0.0;
         return (double) tiempoRespuestaTotal / contadorRespondidos;
     }
+    
+    /**
+     * Métrica de Equidad (Fairness)
+     * Se calcula usando el Coeficiente de Variación del Tiempo de Retorno.
+     * Un valor cercano a 0.0 indica que el tiempo de ejecución se distribuyó equitativamente.
+     * @return Coeficiente de variación (0.0 = perfectamente equitativo)
+     */
+    public double calcularEquidad() {
+        if (contadorTerminados <= 1) return 0.0;
+
+        double mediaTR = calcularTiempoDeRetornoPromedio();
+        if (mediaTR <= 0.0) return 0.0;
+
+        double sumaDeDiferenciasCuadradas = 0.0;
+        for (int i = 0; i < contadorTerminados; i++) {
+            PCB pcb = pcbsTerminados[i];
+            double tr = (pcb.getTiempoFinalizacion() - pcb.getArrivalTime());
+            sumaDeDiferenciasCuadradas += Math.pow(tr - mediaTR, 2);
+        }
+
+        double varianza = sumaDeDiferenciasCuadradas / contadorTerminados;
+        double desviacionEstandar = Math.sqrt(varianza);
+        
+        // Coeficiente de Variación (Desviación Estándar / Media)
+        return desviacionEstandar / mediaTR;
+    }
+    
+    /**
+     * NUEVO MÉTODO: Retorna un resumen completo de todas las métricas
+     * Útil para la GUI y para debugging
+     */
+    public String obtenerResumenMetricas() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("=== RESUMEN DE MÉTRICAS ===\n");
+        sb.append("Procesos terminados: ").append(contadorTerminados).append("\n");
+        sb.append("Ciclos totales: ").append(ciclosTotales).append("\n");
+        sb.append("Throughput: ").append(String.format("%.4f", calcularThroughput())).append(" procesos/ciclo\n");
+        sb.append("Utilización CPU: ").append(String.format("%.2f", calcularUtilizacionCPU() * 100)).append("%\n");
+        sb.append("Tiempo retorno promedio: ").append(String.format("%.2f", calcularTiempoDeRetornoPromedio())).append(" ciclos\n");
+        sb.append("Tiempo espera promedio: ").append(String.format("%.2f", calcularTiempoDeEsperaPromedio())).append(" ciclos\n");
+        sb.append("Tiempo respuesta promedio: ").append(String.format("%.2f", calcularTiempoDeRespuestaPromedio())).append(" ciclos\n");
+        sb.append("Equidad (CV): ").append(String.format("%.4f", calcularEquidad())).append("\n");
+        
+        return sb.toString();
+    }
+    
+    /**
+     * NUEVO MÉTODO: Limpia todas las métricas (útil para reiniciar la simulación)
+     */
+    public void limpiarMetricas() {
+        for (int i = 0; i < contadorTerminados; i++) {
+            pcbsTerminados[i] = null;
+        }
+        contadorTerminados = 0;
+        ciclosTotales = 0;
+        ciclosCPUInactiva = 0;
+        ciclosKernelCPU = 0;
+    }
+
+    // --- Getters para la GUI ---
+    public long getCiclosTotales() { return ciclosTotales; }
+    public int getContadorTerminados() { return contadorTerminados; }
+    public PCB[] getPCBsTerminados() { return pcbsTerminados; }
+    public long getCiclosCPUInactiva() { return ciclosCPUInactiva; }
+    public long getCiclosKernelCPU() { return ciclosKernelCPU; }
 }

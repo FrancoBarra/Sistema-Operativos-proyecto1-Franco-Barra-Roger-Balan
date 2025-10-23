@@ -5,8 +5,8 @@
 package proyecto1_franco_barra_roger_balan;
 
 /**
- * Clase Cola: Implementa una estructura de datos de Cola (Queue) 
- * basada en nodos para almacenar PCBs.
+ *
+ * @author frank
  */
 public class Cola {
 
@@ -19,9 +19,9 @@ public class Cola {
         this.tail = null;
         this.size = 0;
     }
-
+    
     /**
-     * Agrega un PCB al final de la cola (FIFO).
+     * Agrega un PCB al final de la cola
      */
     public void agregar(PCB pcb) {
         Node newNode = new Node(pcb); 
@@ -37,7 +37,7 @@ public class Cola {
     }
 
     /**
-     * Saca y retorna el PCB del frente de la cola (FIFO).
+     * Remueve y retorna el PCB al frente de la cola
      */
     public PCB sacar() {
         if (isEmpty()) {
@@ -45,7 +45,6 @@ public class Cola {
         }
 
         PCB pcb = this.head.getPcb();
-
         this.head = this.head.getNext();
 
         if (this.head == null) {
@@ -57,7 +56,7 @@ public class Cola {
     }
     
     /**
-     * Retorna el PCB del frente sin removerlo.
+     * Retorna el PCB al frente de la cola sin removerlo
      */
     public PCB verFrente() {
         if (isEmpty()) {
@@ -65,13 +64,17 @@ public class Cola {
         }
         return this.head.getPcb();
     }
-
+    
     /**
-     * Remueve un PCB específico de la cola por su ID.
-     * Este método es usado por el Scheduler (para SJF/HRRN/Prioridad) 
-     * y por el IOManager (para sacar procesos bloqueados).
-     * @param pcbId El ID del proceso a remover.
-     * @return El PCB removido, o null si no se encuentra.
+     * NUEVO MÉTODO: Retorna el nodo cabeza de la cola
+     * Necesario para iterar sobre la cola en el SistemaOperativo
+     */
+    public Node getHead() {
+        return this.head;
+    }
+    
+    /**
+     * Remueve un PCB específico por su ID
      */
     public PCB removerPorId(int pcbId) {
         Node current = this.head;
@@ -79,21 +82,18 @@ public class Cola {
 
         while (current != null) {
             if (current.getPcb().getId() == pcbId) {
-                
-                // Caso 1: Remoción de la cabeza (head)
                 if (previous == null) {
+                    // El nodo a remover es la cabeza
                     this.head = current.getNext();
                     if (this.head == null) { 
-                        this.tail = null; // La cola queda vacía
+                        this.tail = null;
                     }
-                } 
-                // Caso 2: Remoción de la cola (tail)
-                else if (current == this.tail) {
+                } else if (current == this.tail) {
+                    // El nodo a remover es la cola
                     previous.setNext(null);
                     this.tail = previous;
-                }
-                // Caso 3: Remoción de un nodo intermedio
-                else {
+                } else {
+                    // El nodo a remover está en medio
                     previous.setNext(current.getNext());
                 }
 
@@ -103,25 +103,60 @@ public class Cola {
             previous = current;
             current = current.getNext();
         }
-        return null; // PCB no encontrado
+        return null; // No se encontró el PCB
     }
     
     /**
-     * Verifica si la cola está vacía.
+     * Verifica si la cola está vacía
      */
     public boolean isEmpty() {
         return this.head == null;
     }
 
     /**
-     * Retorna el número de elementos en la cola.
+     * Retorna el tamaño actual de la cola
      */
     public int getSize() {
         return size;
     }
     
-    // Getter para la cabeza (usado por Scheduler para iterar)
-    public Node getHead() {
-        return head;
+    /**
+     * NUEVO MÉTODO: Retorna una representación en String de la cola
+     * Útil para debugging y para la GUI
+     */
+    public String toString() {
+        if (isEmpty()) {
+            return "Cola vacía";
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        Node current = this.head;
+        int count = 0;
+        
+        while (current != null) {
+            PCB pcb = current.getPcb();
+            sb.append("[").append(count).append("] ")
+              .append(pcb.getName())
+              .append(" (ID: ").append(pcb.getId()).append(")")
+              .append(" - Ciclos restantes: ").append(pcb.getCiclosRestantes());
+            
+            if (current.getNext() != null) {
+                sb.append(" -> ");
+            }
+            
+            current = current.getNext();
+            count++;
+        }
+        
+        return sb.toString();
     }
+
+    public Node getTail() {
+        return tail;
+    }
+
+    public void setTail(Node tail) {
+        this.tail = tail;
+    }
+    
 }

@@ -14,16 +14,11 @@ public class GestorEstados {
     private final Cola readyQueue;
     private final Cola blockedQueue;
     private final Cola suspendedReadyQueue; 
-    private final Cola suspendedBlockedQueue; // Se inicializa internamente
+    private final Cola suspendedBlockedQueue; 
     private final Scheduler scheduler;
 
     /**
      * Constructor
-     * @param readyQueue Cola de Listos.
-     * @param blockedQueue Cola de Bloqueados.
-     * @param suspendedReadyQueue Cola de Listos Suspendidos.
-     * @param scheduler Referencia al planificador para reinsertar.
-     * * NOTA: La suspendedBlockedQueue se instancia dentro, asumiendo 4 argumentos de entrada.
      */
     public GestorEstados(Cola readyQueue, Cola blockedQueue, 
                          Cola suspendedReadyQueue, Scheduler scheduler) {
@@ -31,43 +26,31 @@ public class GestorEstados {
         this.blockedQueue = blockedQueue;
         this.suspendedReadyQueue = suspendedReadyQueue;
         this.scheduler = scheduler;
-        // Instancia la cola faltante. Esto resuelve el problema de la firma del constructor.
-        this.suspendedBlockedQueue = new Cola(); 
+        this.suspendedBlockedQueue = new Cola(); // Instancia para completitud
     }
     
     /**
-     * Mueve un proceso de Bloqueo a Listo (Despertar).
-     * Usado por el IOManager al finalizar una E/S.
-     * @param pcb El PCB a mover.
+     * Mueve un proceso de cualquier estado de Bloqueo a Listo (Despertar).
+     * Usado después de que una I/O termina o una suspensión se revierte.
      */
     public void moveBlockedToReady(PCB pcb) {
-        // No se necesita remover de blockedQueue aquí; el IOManager lo hace.
-        
-        // Cambia el estado a READY
-        pcb.setStatus(ProcessStatus.READY); 
-        
-        // Reinserta el proceso en la ReadyQueue (el Scheduler decide dónde va)
-        this.scheduler.reinsertProcess(pcb); 
+        pcb.setStatus(ProcessStatus.READY);
+        // El scheduler se encarga de insertarlo en el lugar correcto (FCFS, SJF, etc.)
+        scheduler.reinsertProcess(pcb); 
     }
     
-    // =========================================================================
-    // --- Lógica de Suspensión (Planificador a Mediano Plazo) ---
-    // =========================================================================
-
     /**
-     * Lógica de Suspensión de Listos: Mueve un proceso de READY a SUSPENDED_READY.
-     * @return true si el proceso fue suspendido.
+     * Lógica de Suspensión: Mueve un proceso de READY a SUSPENDED_READY.
+     * Esto simula la acción del Planificador a Mediano Plazo para liberar memoria.
+     * @param pcb El PCB a suspender.
      */
-    public boolean suspendReadyProcess(int pcbId) {
-        // Remover de readyQueue
-        PCB pcb = this.readyQueue.removerPorId(pcbId);
+    public boolean suspendReadyProcess(PCB pcb) {
+        // Asumimos que el proceso fue removido de readyQueue antes de llamar.
+        if (pcb.getStatus() != ProcessStatus.READY) return false;
         
-        if (pcb != null) {
-            pcb.setStatus(ProcessStatus.SUSPENDED_READY);
-            this.suspendedReadyQueue.agregar(pcb);
-            return true;
-        }
-        return false;
+        pcb.setStatus(ProcessStatus.SUSPENDED_READY);
+        this.suspendedReadyQueue.agregar(pcb);
+        return true;
     }
     
     /**
@@ -85,7 +68,7 @@ public class GestorEstados {
     
     /**
      * Lógica de Suspensión de Bloqueados: Mueve un proceso de BLOCKED a SUSPENDED_BLOCKED.
-     * @return true si el proceso fue suspendido.
+     * (Simulación de Planificador a Mediano Plazo para liberar memoria)
      */
     public boolean suspendBlockedProcess(int pcbId) {
         PCB pcb = this.blockedQueue.removerPorId(pcbId);
@@ -96,17 +79,49 @@ public class GestorEstados {
         }
         return false;
     }
+
+    // =========================================================================
+    // --- MÉTODOS GETTERS (NUEVOS) PARA QUE SISTEMAOPERATIVO PUEDA ACCEDER ---
+    // =========================================================================
     
     /**
-     * Lógica de Reanudación de Bloqueados: Mueve un proceso de SUSPENDED_BLOCKED a BLOCKED.
-     * @return El PCB reanudado o null si la cola está vacía.
+     * NUEVO MÉTODO: Getter para suspendedReadyQueue
+     * @return La cola de listos suspendidos
      */
-    public PCB resumeBlockedProcess() {
-        PCB pcb = this.suspendedBlockedQueue.sacar();
-        if (pcb != null) {
-            pcb.setStatus(ProcessStatus.BLOCKED);
-            this.blockedQueue.agregar(pcb); // Lo devuelve a la BlockedQueue
-        }
-        return pcb;
+    public Cola getSuspendedReadyQueue() {
+        return suspendedReadyQueue;
+    }
+    
+    /**
+     * NUEVO MÉTODO: Getter para suspendedBlockedQueue
+     * @return La cola de bloqueados suspendidos
+     */
+    public Cola getSuspendedBlockedQueue() {
+        return suspendedBlockedQueue;
+    }
+    
+    /**
+     * NUEVO MÉTODO: Getter para readyQueue
+     * @return La cola de listos
+     */
+    public Cola getReadyQueue() {
+        return readyQueue;
+    }
+    
+    /**
+     * NUEVO MÉTODO: Getter para blockedQueue
+     * @return La cola de bloqueados
+     */
+    public Cola getBlockedQueue() {
+        return blockedQueue;
+    }
+    
+    /**
+     * NUEVO MÉTODO: Retorna el tamaño total de todas las colas
+     * @return Número total de procesos en todas las colas
+     */
+    public int getTotalProcesses() {
+        return readyQueue.getSize() + blockedQueue.getSize() + 
+               suspendedReadyQueue.getSize() + suspendedBlockedQueue.getSize();
     }
 }

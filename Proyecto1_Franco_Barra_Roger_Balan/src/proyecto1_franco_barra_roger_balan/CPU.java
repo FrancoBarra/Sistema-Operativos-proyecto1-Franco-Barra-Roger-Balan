@@ -43,9 +43,8 @@ public class CPU {
             return null;
         }
 
-        // 1. Ejecutar instrucción y actualizar contadores
-        currentProcess.incrementarProgramCounter();
-        currentProcess.decrementarCiclosRestantes();
+        // 1. Ejecutar instrucción completa (PC++, MAR++, ciclosRestantes--)
+        currentProcess.executeInstruction();
         this.quantumCounter++; // Se incrementa por cada ciclo de ejecución
 
         // 2. Revisar si Termina
@@ -96,5 +95,13 @@ public class CPU {
     
     public boolean isBusy() {
         return currentProcess != null;
+    }
+    
+    public int getQuantumCounter() {
+        return quantumCounter;
+    }
+    
+    public int getQuantumSize() {
+        return quantumSize;
     }
 }
