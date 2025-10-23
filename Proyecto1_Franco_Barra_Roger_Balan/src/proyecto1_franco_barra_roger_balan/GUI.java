@@ -3,7 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package proyecto1_franco_barra_roger_balan;
-
+import java.awt.Dimension;
 /**
  *
  * @author frank
@@ -30,6 +30,9 @@ public class GUI extends javax.swing.JFrame {
 
         // (Opcional) Poner un valor inicial a los spinners
         spinnerCicloMs.setValue(100);
+        int ancho=80;
+        int alto=spinnerCicloMs.getPreferredSize().height;
+        spinnerCicloMs.setPreferredSize(new Dimension(ancho,alto));
         spinnerQuantum.setValue(5);
     }
     
@@ -138,7 +141,9 @@ public class GUI extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
+        jPanel1.setBackground(new java.awt.Color(99, 128, 169));
         jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder(new java.awt.Color(102, 255, 255), null));
+        jPanel1.setForeground(new java.awt.Color(100, 100, 150));
         jPanel1.setLayout(new java.awt.GridBagLayout());
 
         jLabel1.setText("Algoritmo");
@@ -149,7 +154,6 @@ public class GUI extends javax.swing.JFrame {
         gridBagConstraints.insets = new java.awt.Insets(38, 48, 0, 0);
         jPanel1.add(jLabel1, gridBagConstraints);
 
-        cmbAlgoritmo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         cmbAlgoritmo.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmbAlgoritmoActionPerformed(evt);
@@ -173,6 +177,7 @@ public class GUI extends javax.swing.JFrame {
         jPanel1.add(jLabel2, gridBagConstraints);
 
         spinnerCicloMs.setModel(new javax.swing.SpinnerNumberModel(100, 1, null, 1));
+        spinnerCicloMs.setMinimumSize(new java.awt.Dimension(100, 100));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 3;
@@ -242,6 +247,7 @@ public class GUI extends javax.swing.JFrame {
         gridBagConstraints.insets = new java.awt.Insets(26, 40, 100, 0);
         jPanel1.add(btnDetener, gridBagConstraints);
 
+        jPanel3.setBackground(new java.awt.Color(99, 128, 169));
         jPanel3.setBorder(javax.swing.BorderFactory.createEtchedBorder(java.awt.Color.cyan, null));
 
         jLabel4.setText("Reloj Global");
@@ -259,15 +265,18 @@ public class GUI extends javax.swing.JFrame {
         jLabel11.setText("Cola Ready");
 
         txtAreaBlocked.setEditable(false);
+        txtAreaBlocked.setBackground(new java.awt.Color(204, 204, 204));
         txtAreaBlocked.setColumns(20);
         txtAreaBlocked.setRows(5);
         jScrollPane1.setViewportView(txtAreaBlocked);
 
         txtAreaReady.setEditable(false);
+        txtAreaReady.setBackground(new java.awt.Color(204, 204, 204));
         txtAreaReady.setColumns(20);
         txtAreaReady.setRows(5);
         jScrollPane3.setViewportView(txtAreaReady);
 
+        txtAreaTerminados.setBackground(new java.awt.Color(204, 204, 204));
         txtAreaTerminados.setColumns(20);
         txtAreaTerminados.setRows(5);
         jScrollPane2.setViewportView(txtAreaTerminados);
@@ -279,7 +288,7 @@ public class GUI extends javax.swing.JFrame {
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addGap(86, 86, 86)
                 .addComponent(jLabel4)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 23, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(lblRelojGlobal, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(94, 94, 94))
             .addGroup(jPanel3Layout.createSequentialGroup()
@@ -336,6 +345,7 @@ public class GUI extends javax.swing.JFrame {
                 .addGap(43, 43, 43))
         );
 
+        jPanel4.setBackground(new java.awt.Color(99, 128, 169));
         jPanel4.setBorder(javax.swing.BorderFactory.createEtchedBorder(java.awt.Color.cyan, null));
         jPanel4.setLayout(new java.awt.GridBagLayout());
 
@@ -428,6 +438,7 @@ public class GUI extends javax.swing.JFrame {
         gridBagConstraints.insets = new java.awt.Insets(18, 70, 31, 0);
         jPanel4.add(lblRespuesta, gridBagConstraints);
 
+        jPanel2.setBackground(new java.awt.Color(99, 128, 169));
         jPanel2.setBorder(javax.swing.BorderFactory.createEtchedBorder(java.awt.Color.cyan, null));
 
         btnCargarCSV.setText("Cargar CSV");
@@ -437,7 +448,7 @@ public class GUI extends javax.swing.JFrame {
             }
         });
 
-        txtRutaCSV.setBackground(new java.awt.Color(255, 255, 255));
+        txtRutaCSV.setBackground(new java.awt.Color(204, 204, 204));
         txtRutaCSV.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 txtRutaCSVActionPerformed(evt);
@@ -448,23 +459,21 @@ public class GUI extends javax.swing.JFrame {
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(124, 124, 124)
-                .addComponent(btnCargarCSV)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(txtRutaCSV, javax.swing.GroupLayout.PREFERRED_SIZE, 201, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(60, 60, 60))
+                .addGap(74, 74, 74)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(btnCargarCSV, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(txtRutaCSV))
+                .addGap(80, 80, 80))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(29, 29, 29)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(btnCargarCSV)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(txtRutaCSV, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(24, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -472,7 +481,7 @@ public class GUI extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -493,7 +502,7 @@ public class GUI extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(18, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         pack();
