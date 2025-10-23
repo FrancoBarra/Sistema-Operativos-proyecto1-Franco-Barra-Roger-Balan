@@ -4,240 +4,205 @@
  */
 package proyecto1_franco_barra_roger_balan;
 
-/**
- *
- * @author frank
- */
-// Archivo: SistemaOperativo.java
+import java.util.concurrent.Semaphore;
+import proyecto1_franco_barra_roger_balan.Scheduler.SchedulingAlgorithm;
 
 /**
- * Clase SistemaOperativo: El Kernel simulado. Controla el ciclo de reloj, 
- * los estados, la planificación y el despacho de procesos, evitando el uso
- * de cualquier clase de java.util.
+ * Clase SistemaOperativo: Es el motor de la simulación. 
+ * Implementa Runnable para el ciclo de reloj y utiliza un Semáforo para la exclusión mutua.
  */
 public class SistemaOperativo implements Runnable {
-    
-    // --- Atributos de Componentes ---
+
+    // Componentes del SO
     private final CPU cpu;
     private final Scheduler scheduler;
-    
-    // Todas las colas de proceso (instancias de la clase Cola personalizada)
+    private final GestorEstados gestorEstados;
+    private final GestorDeMetricas gestorMetricas;
+    private final IOManager ioManager; 
+
+    // Colas de Procesos
     private final Cola readyQueue;
     private final Cola blockedQueue;
-    private final Cola terminatedQueue;
-    private final Cola suspendedReadyQueue; // Planificador a mediano plazo
-
-    // --- Control de Hilos de E/S (Reemplazo manual de java.util.Map) ---
-    private Thread[] ioThreads; // Arreglo simple de Java para rastrear hilos de E/S
-    private int ioThreadCount; // Contador actual de hilos activos
-    private static final int MAX_THREADS = 100; // Capacidad máxima del array
-
-    // --- Control de Tiempo y Simulación ---
-    private long globalClock;     // Contador de ciclos de reloj (ticks)
-    private long cycleDuration;   // Duración en milisegundos de un ciclo (para Thread.sleep)
-    private volatile boolean isRunning; // Control del bucle de simulación
     
-    // --- Constructor ---
-    public SistemaOperativo(int quantum, long initialCycleDuration) {
-        // Inicialización de colas
+    // Configuración y Control
+    private final SimulacionConfig config;
+    private long globalClock = 0; 
+    private volatile boolean isRunning = false;
+    private long cycleDuration; 
+
+    // Concurrencia: Semáforo para acceso exclusivo a la CPU/Colas
+    private final Semaphore cpuMutex = new Semaphore(1);
+    
+    private java.lang.Thread soThread;
+
+    /**
+     * Constructor del Sistema Operativo.
+     */
+    public SistemaOperativo(SimulacionConfig config, int quantumSize) {
+        this.config = config;
+        this.cycleDuration = (config != null) ? config.getCycleDuration() : 100; 
+
+        // 1. Inicializar Colas
         this.readyQueue = new Cola();
         this.blockedQueue = new Cola();
-        this.terminatedQueue = new Cola();
-        this.suspendedReadyQueue = new Cola();
+        Cola suspendedReadyQueue = new Cola(); 
+
+        // 2. Inicializar Componentes
+        this.cpu = new CPU(quantumSize); 
+        this.scheduler = new Scheduler(this.readyQueue, SchedulingAlgorithm.FCFS, quantumSize); 
+        this.gestorMetricas = new GestorDeMetricas();
         
-        // Inicialización de componentes principales
-        this.cpu = new CPU(quantum);
-        // Inicializar Scheduler con un algoritmo por defecto
-        this.scheduler = new Scheduler(readyQueue, Scheduler.SchedulingAlgorithm.FCFS, quantum); 
+        // Constructor de GestorEstados solo con 4 parámetros
+        this.gestorEstados = new GestorEstados(this.readyQueue, this.blockedQueue, 
+                                               suspendedReadyQueue, this.scheduler);
         
-        // Inicialización del rastreo manual de hilos
-        this.ioThreads = new Thread[MAX_THREADS];
-        this.ioThreadCount = 0;
+        // 3. Inicializar I/O Manager (Hilo de E/S)
+        this.ioManager = new IOManager(this.blockedQueue, this.gestorEstados, this.cpuMutex);
         
-        this.globalClock = 0;
-        this.cycleDuration = initialCycleDuration;
-        this.isRunning = false;
+        // 4. Inyectar Procesos Iniciales
+        if (config != null) {
+            injectInitialProcesses(config.getInitialProcesses());
+        }
     }
     
-    /**
-     * El método run() se ejecuta en un Thread separado y lanza el ciclo de reloj.
-     */
+    public void startSimulation() {
+        if (isRunning) return;
+        this.isRunning = true;
+        
+        this.soThread = new java.lang.Thread(this);
+        this.soThread.start();
+        
+        new java.lang.Thread(ioManager).start();
+    }
+
+    private void injectInitialProcesses(PCB[] pcbs) {
+        if (pcbs == null) return;
+        for (PCB pcb : pcbs) {
+            pcb.setStatus(ProcessStatus.READY);
+            this.readyQueue.agregar(pcb); 
+        }
+    }
+
     @Override
     public void run() {
-        isRunning = true;
-        
         while (isRunning) {
-            
-            tick();
-            
-            // Controlar la velocidad de la simulación
             try {
-                // Thread.sleep es de java.lang.Thread (no util.*)
-                java.lang.Thread.sleep(cycleDuration); 
+                // Sección Crítica: Adquirir Mutex
+                cpuMutex.acquire(); 
+                
+                advanceCycle();
+                
             } catch (InterruptedException e) {
                 java.lang.Thread.currentThread().interrupt();
-                isRunning = false;
+                break;
+            } finally {
+                // Sección Crítica: Liberar Mutex
+                cpuMutex.release(); 
+            }
+
+            try {
+                java.lang.Thread.sleep(cycleDuration);
+            } catch (InterruptedException e) {
+                java.lang.Thread.currentThread().interrupt();
+                break;
             }
         }
+        
+        ioManager.stopRunning();
+        System.out.println("Simulación terminada en ciclo: " + globalClock);
     }
     
-    /**
-     * El corazón del SO: Ejecuta todas las fases del ciclo de reloj.
-     */
-    public void tick() {
-        if (!isRunning) return;
+    private void advanceCycle() {
+        this.globalClock++;
         
-        globalClock++;
+        PCB expelledPcb = null;
+        boolean wasPreempted = false; 
+        boolean cpuWasBusy = cpu.isBusy(); 
         
-        // --- FASE 1: DESPACHO / INTERRUPCIÓN ---
-        if (!cpu.isBusy() || scheduler.getActiveAlgorithm() == Scheduler.SchedulingAlgorithm.SJF_PREEMPTIVE) {
-            dispatch();
+        // 1. Ejecución (Modo Usuario)
+        if (cpuWasBusy) {
+            expelledPcb = cpu.executeCycle();
+            
+            if (expelledPcb == null) {
+                // Proceso ejecutó y continúa
+                PCB current = cpu.getCurrentProcess();
+                current.incrementarTiempoEnCPU();
+                if (current.getTiempoRespuesta() == 0) {
+                     current.setTiempoRespuesta(globalClock); 
+                }
+            }
+        } 
+        
+        // 2. Gestión de Interrupciones/Desalojos (Modo Kernel)
+        if (expelledPcb != null) {
+            handleInterrupt(expelledPcb);
+            wasPreempted = true;
         }
         
-        // --- FASE 2: EJECUCIÓN DEL CICLO ---
-        PCB pcbSaliente = cpu.executeCycle();
-        
-        // --- FASE 3: MANEJO DE DESALOJO O TERMINACIÓN ---
-        if (pcbSaliente != null) {
-            handleDesalojo(pcbSaliente);
-        }
+        // 3. Planificación (Modo Kernel)
+        if (!cpu.isBusy()) {
+            // CPU libre: Planificar y despachar
+            PCB nextPcb = scheduler.schedule(globalClock);
+            if (nextPcb != null) {
+                cpu.dispatch(nextPcb); 
+                gestorMetricas.incrementarCiclosKernel(); // Tiempo de Dispatch
+            } else {
+                // CPU Ociosa
+                gestorMetricas.incrementarCiclosCPUInactiva(); 
+            }
+        } else if (cpuWasBusy && wasPreempted) {
+             // Hubo desalojo (Kernel Time)
+             gestorMetricas.incrementarCiclosKernel();
+        } 
 
-        // FASE 4: (Aquí iría la lógica del Planificador a Mediano Plazo para Suspender/Reanudar)
+        // 4. Actualizar contadores de espera
+        updateReadyQueueCounters();
         
-        // NOTIFICAR GUI para refrescar la vista
+        // 5. Condición de Parada
+        if (readyQueue.isEmpty() && blockedQueue.isEmpty() && !cpu.isBusy() && config != null && gestorMetricas.getContadorTerminados() >= config.getInitialProcesses().length) {
+            this.isRunning = false;
+        }
     }
     
-    /**
-     * Maneja el proceso de desalojo (interrupción, terminación, o E/S).
-     */
-    private void handleDesalojo(PCB pcb) {
-        switch (pcb.getStatus()) {
+    private void handleInterrupt(PCB pcb) {
+        ProcessStatus finalStatus = pcb.getStatus();
+        
+        switch (finalStatus) {
             case TERMINATED:
-                terminatedQueue.agregar(pcb);
-                // Detener y eliminar rastreo del Thread de E/S asociado
-                removeIOThread(pcb.getId());
+                pcb.setTiempoFinalizacion(globalClock);
+                gestorMetricas.agregarPCBTerminado(pcb);
                 break;
                 
             case BLOCKED:
-                blockedQueue.agregar(pcb);
-                // Lanzar el Thread de E/S para simular la espera
-                Thread ioThread = new Thread(pcb, this);
-                addIOThread(ioThread);
-                ioThread.start();
+                this.blockedQueue.agregar(pcb);
                 break;
                 
             case RUNNING: 
-                // Esto ocurre si el quantum ha expirado (Round Robin)
+                // Quantum/Preemption: el SO lo reinserta como READY.
                 pcb.setStatus(ProcessStatus.READY);
                 scheduler.reinsertProcess(pcb);
                 break;
                 
             default:
-                // El proceso desalojado vuelve a listo (por preemption o por defecto)
-                pcb.setStatus(ProcessStatus.READY);
-                scheduler.reinsertProcess(pcb);
+                System.err.println("Error: Proceso " + pcb.getId() + " desalojado con estado inesperado: " + finalStatus);
                 break;
         }
-    }
-    
-    /**
-     * Invoca al Scheduler para seleccionar el próximo proceso para la CPU.
-     */
-    private void dispatch() {
-        PCB nextPcb = scheduler.selectNextProcess();
         
-        if (nextPcb != null) {
-            // Sacar de la cola si es FCFS o Round Robin (el Scheduler no lo hace directamente)
-            if (scheduler.getActiveAlgorithm() == Scheduler.SchedulingAlgorithm.FCFS || 
-                scheduler.getActiveAlgorithm() == Scheduler.SchedulingAlgorithm.ROUND_ROBIN) {
-                readyQueue.sacar();
-            } else if (scheduler.getActiveAlgorithm() == Scheduler.SchedulingAlgorithm.SJF_PREEMPTIVE) {
-                // Para SJF Apropiativo, el selectNextProcess() ya removió el PCB más corto.
-            }
-            
-            // Verificar si hay un proceso en ejecución (para Preemption)
-            PCB currentPcb = cpu.getCurrentProcess();
-            if (currentPcb != null && currentPcb.getStatus() == ProcessStatus.RUNNING) {
-                 // Context Switching: Guardar el proceso actual y devolverlo a la cola
-                 currentPcb.setStatus(ProcessStatus.READY);
-                 scheduler.reinsertProcess(currentPcb);
-            }
-
-            // Despacho final a la CPU
-            cpu.dispatch(nextPcb); 
-            
-            // Registrar métricas
-            if (nextPcb.getTiempoRespuesta() == -1) {
-                nextPcb.setTiempoRespuesta(globalClock);
-            }
-        }
+        gestorMetricas.incrementarCiclosKernel(); 
     }
     
-    /**
-     * Recibe la notificación del Thread de E/S cuando la operación ha terminado.
-     * Mueve el PCB de BLOCKED a READY. Debe ser synchronized para seguridad concurrente.
-     * @param pcbId El ID del proceso cuya E/S terminó.
-     */
-    public synchronized void processIOCompleted(int pcbId) {
-        // 1. Remover el PCB de la cola de Bloqueados
-        PCB pcb = blockedQueue.removerPorId(pcbId);
-        
-        if (pcb != null) {
-            // 2. Mover a estado Listo y reinsertar
-            pcb.setStatus(ProcessStatus.READY);
-            scheduler.reinsertProcess(pcb); 
-            
-            // 3. Eliminar el rastreo del Thread de E/S
-            removeIOThread(pcbId); 
-        }
-    }
-    
-    // --- Lógica Manual de Arreglos (Reemplazo de Map/List) ---
-
-    /** Agrega un Thread de E/S al array de rastreo. */
-    private void addIOThread(Thread thread) {
-        if (ioThreadCount < MAX_THREADS) {
-            ioThreads[ioThreadCount++] = thread;
-        }
-    }
-    
-    /** Elimina un Thread de E/S del array de rastreo. */
-    private void removeIOThread(int pcbId) {
-        for (int i = 0; i < ioThreadCount; i++) {
-            if (ioThreads[i] != null && ioThreads[i].getPcb().getId() == pcbId) {
-                // Detener el Thread (si aún no lo está)
-                ioThreads[i].stopRunning();
-                // Desplazar el resto de elementos del array hacia atrás (simulando remoción de una lista)
-                for (int j = i; j < ioThreadCount - 1; j++) {
-                    ioThreads[j] = ioThreads[j+1];
-                }
-                ioThreads[ioThreadCount - 1] = null; // Limpiar la última posición
-                ioThreadCount--;
-                return;
-            }
+    private void updateReadyQueueCounters() {
+        Node current = readyQueue.getHead();
+        while (current != null) {
+            current.getPcb().incrementarTiempoEspera();
+            current = current.getNext();
         }
     }
 
-    // --- Métodos Públicos para la GUI ---
+    // --- Getters y Setters para la GUI ---
+    // (Se omiten por brevedad, asumiendo que ya los tienes correctos)
     
-    public void setCycleDuration(long duration) {
-        this.cycleDuration = duration;
-    }
-    
-    public void stopSimulation() {
+    public void stopRunning() {
         this.isRunning = false;
-        // Detener todos los hilos de E/S
-        for (int i = 0; i < ioThreadCount; i++) {
-            if (ioThreads[i] != null) {
-                 ioThreads[i].stopRunning();
-            }
-        }
     }
-    
-    public Cola getReadyQueue() { return readyQueue; }
-    public Cola getBlockedQueue() { return blockedQueue; }
-    public CPU getCpu() { return cpu; }
-    public long getGlobalClock() { return globalClock; }
-    public Scheduler getScheduler() { return scheduler; }
-    public boolean isRunning() { return isRunning; }
 }

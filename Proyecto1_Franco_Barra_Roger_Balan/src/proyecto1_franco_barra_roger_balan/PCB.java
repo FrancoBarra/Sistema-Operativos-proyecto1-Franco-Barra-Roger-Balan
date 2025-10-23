@@ -5,10 +5,9 @@
 package proyecto1_franco_barra_roger_balan;
 
 /**
- *
- * @author frank
+ * Clase PCB (Process Control Block): Contiene toda la información
+ * necesaria para la gestión de un proceso por el Sistema Operativo.
  */
-
 public class PCB {
 
     private static volatile int ID_COUNTER = 1000;
@@ -29,68 +28,139 @@ public class PCB {
     
     // --- 4. Planificación y Tipo de Proceso ---
     private final ProcessType type;     
-
+    private int priority; // Añadido para planificación por Prioridad (Inicializado en constructor)
+    
     // --- 5. Parámetros de Excepción (Solo para I/O_BOUND) ---
-    private final int ciclosParaExcepcion;   
-    private int ciclosIOEspera;              
-    private final int ciclosParaSatisfacerIO; 
+    private final int ciclosParaExcepcion;   // Cada cuántos ciclos se solicita I/O
+    private int ciclosIOEspera;              // Ciclos restantes para terminar la I/O
+    private final int ciclosParaSatisfacerIO; // Total de ciclos que tarda la I/O
     
     // --- 6. Métricas de Rendimiento ---
-    private long tiempoRespuesta; 
-    private long tiempoEsperaAcumulado; 
+    private long tiempoFinalizacion = 0;        
+    private long tiempoRespuesta = 0;           // Tiempo de la primera ejecución (First Run)
+    private long tiempoEsperaAcumulado = 0;     // Tiempo total en la Ready Queue
+    private long tiempoEnCPUAcumulado = 0;      // Tiempo total en la CPU
+    private long tiempoEnBloqueadoAcumulado = 0; // Tiempo total en la Blocked Queue
     
-    /**
-     * Método sincronizado para generar un ID único de forma segura.
-     * Usar 'synchronized' previene que dos hilos generen el mismo ID.
-     */
-    private static int getNextID() {
-        // Bloque de código sincronizado para garantizar la exclusión mutua
-        // y la unicidad del ID, cumpliendo la funcionalidad de AtomicInteger
-        // sin depender de ella.
-        synchronized (PCB.class) { 
-            return ID_COUNTER++;
-        }
-    }
 
     /**
-     * Constructor: Crea un nuevo Bloque de Control de Proceso.
+     * Constructor principal del PCB.
+     * @param name Nombre del proceso.
+     * @param longitudPrograma Número total de ciclos requeridos.
+     * @param type Tipo de proceso (CPU_BOUND/IO_BOUND).
+     * @param ciclosParaExcepcion Ciclos para generar interrupción de E/S.
+     * @param ciclosParaSatisfacerIO Ciclos que dura la E/S.
+     * @param arrivalTime El ciclo de reloj en que el proceso entra (normalmente 0).
      */
     public PCB(String name, int longitudPrograma, ProcessType type, 
-               int ciclosParaExcepcion, int ciclosParaSatisfacerIO, long tiempoLlegada) {
+               int ciclosParaExcepcion, int ciclosParaSatisfacerIO, long arrivalTime) {
         
-        // Asignamos el ID único generado de forma segura
-        this.id = getNextID(); 
-        
+        this.id = ID_COUNTER++;
         this.name = name;
+        this.status = ProcessStatus.NEW;
+        this.arrivalTime = arrivalTime;
+
         this.longitudPrograma = longitudPrograma;
         this.ciclosRestantes = longitudPrograma;
+        
         this.type = type;
+        this.priority = 1; // Prioridad por defecto
+        
         this.ciclosParaExcepcion = ciclosParaExcepcion;
         this.ciclosParaSatisfacerIO = ciclosParaSatisfacerIO;
-        this.status = ProcessStatus.NEW; 
-        this.programCounter = 0;
-        this.memoryAddressRegister = 0; 
         this.ciclosIOEspera = 0;
-        this.arrivalTime = tiempoLlegada;
-        this.tiempoRespuesta = -1;
-        this.tiempoEsperaAcumulado = 0;
     }
-
-    // --- Métodos de Ayuda ---
     
-    public void executeInstruction() {
-        if (this.ciclosRestantes > 0) {
-            this.programCounter++;
-            this.memoryAddressRegister++;
-            this.ciclosRestantes--;
+    // =========================================================================
+    // --- SETTERS / MUTATORS ---
+    // =========================================================================
+    
+    public void setStatus(ProcessStatus status) {
+        this.status = status;
+    }
+    
+    public void setCiclosRestantes(int ciclosRestantes) {
+        this.ciclosRestantes = ciclosRestantes;
+    }
+    
+    public void setPriority(int priority) {
+        this.priority = priority;
+    }
+    
+    public void setCiclosIOEspera(int ciclosIOEspera) {
+        this.ciclosIOEspera = ciclosIOEspera;
+    }
+    
+    public void setTiempoFinalizacion(long tiempoFinalizacion) {
+        this.tiempoFinalizacion = tiempoFinalizacion;
+    }
+    
+    /**
+     * Registra el ciclo en que el proceso corre por primera vez.
+     * @param cycle El ciclo global.
+     */
+    public void setTiempoRespuesta(long cycle) {
+        if (this.tiempoRespuesta == 0) {
+            this.tiempoRespuesta = cycle;
         }
     }
-
-    public int getId() { return id; }
-    public String getName() {
-        return this.name;
+    
+    // =========================================================================
+    // --- INCREMENTADORES ---
+    // =========================================================================
+    
+    public void incrementarProgramCounter() {
+        this.programCounter++;
     }
+    
+    public void decrementarCiclosRestantes() {
+        this.ciclosRestantes--;
+    }
+    
+    public void incrementarTiempoEspera() { 
+        this.tiempoEsperaAcumulado++; 
+    }
+    
+    public void incrementarTiempoEnCPU() { 
+        this.tiempoEnCPUAcumulado++; 
+    }
+    
+    public void incrementarTiempoBloqueado() { 
+        this.tiempoEnBloqueadoAcumulado++; 
+    }
+    
+    // =========================================================================
+    // --- GETTERS ---
+    // =========================================================================
+    
+    public int getId() { return id; }
+    public String getName() { return name; }
     public ProcessStatus getStatus() { return status; }
-    public void setStatus(ProcessStatus status) { this.status = status; }
-    //... (y así sucesivamente con todos los demás)
+    public long getArrivalTime() { return arrivalTime; }
+    public int getProgramCounter() { return programCounter; }
+    public int getLongitudPrograma() { return longitudPrograma; }
+    public int getCiclosRestantes() { return ciclosRestantes; }
+    public ProcessType getType() { return type; }
+    public int getPriority() { return priority; }
+    public int getCiclosParaExcepcion() { return ciclosParaExcepcion; }
+    public int getCiclosIOEspera() { return ciclosIOEspera; }
+    public int getCiclosParaSatisfacerIO() { return ciclosParaSatisfacerIO; }
+    
+    // Getters de Métricas
+    public long getTiempoFinalizacion() { return tiempoFinalizacion; }
+    public long getTiempoRespuesta() { return tiempoRespuesta; }
+    public long getTiempoEsperaAcumulado() { return tiempoEsperaAcumulado; }
+    public long getTiempoEnCPUAcumulado() { return tiempoEnCPUAcumulado; }
+    public long getTiempoEnBloqueadoAcumulado() { return tiempoEnBloqueadoAcumulado; }
+    
+    // Métricas calculadas
+    public long getTurnaroundTime() { 
+        // Tiempo de Retorno (Turnaround Time) = Finalización - Llegada
+        return this.tiempoFinalizacion - this.arrivalTime; 
+    }
+    
+    public double getWeightedTurnaroundTime() {
+        // Tiempo de Retorno Ponderado = Turnaround Time / Longitud del Programa
+        return (double)getTurnaroundTime() / this.longitudPrograma;
+    }
 }

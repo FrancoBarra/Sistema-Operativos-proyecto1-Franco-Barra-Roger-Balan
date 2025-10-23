@@ -5,20 +5,12 @@
 package proyecto1_franco_barra_roger_balan;
 
 /**
- *
- * @author frank
- */
-// Archivo: Scheduler.java
-
-/**
- * Clase Scheduler: Implementa y gestiona las políticas de planificación
- * utilizando su propia enumeración anidada.
+ * Clase Scheduler: Implementa y gestiona las políticas de planificación.
  */
 public class Scheduler {
 
     /**
-     * Enumeración SchedulingAlgorithm: Define las 6 políticas de planificación requeridas.
-     * Es estática para que pueda ser referenciada como Scheduler.SchedulingAlgorithm.
+     * Enumeración SchedulingAlgorithm: Define las 7 políticas de planificación.
      */
     public static enum SchedulingAlgorithm {
         FCFS,           // First-Come, First-Served
@@ -26,81 +18,126 @@ public class Scheduler {
         SJF_PREEMPTIVE,     // Shortest Remaining Time First (SRTF) (Apropiativo)
         ROUND_ROBIN,    // Round Robin
         PRIORITY_NON_PREEMPTIVE, // Prioridad (No Apropiativo)
-        PRIORITY_PREEMPTIVE      // Prioridad (Apropiativo)
+        PRIORITY_PREEMPTIVE,     // Prioridad (Apropiativo)
+        HRRN           // Highest Response Ratio Next
     }
 
-    private Cola readyQueue;
+    private final Cola readyQueue;
     private SchedulingAlgorithm activeAlgorithm;
-    private int timeQuantum; // Quantum de tiempo para Round Robin
+    private final int timeQuantum; // Quantum de tiempo para Round Robin
 
     /**
      * Constructor
      * @param readyQueue La instancia de la Cola de Listos.
-     * @param initialAlgorithm El algoritmo de planificación inicial.
-     * @param quantum El quantum de tiempo.
+     * @param initialAlgorithm El algoritmo inicial.
+     * @param quantumSize El tamaño del quantum.
      */
-    public Scheduler(Cola readyQueue, SchedulingAlgorithm initialAlgorithm, int quantum) {
+    public Scheduler(Cola readyQueue, SchedulingAlgorithm initialAlgorithm, int quantumSize) {
         this.readyQueue = readyQueue;
         this.activeAlgorithm = initialAlgorithm;
-        this.timeQuantum = quantum;
+        this.timeQuantum = quantumSize;
     }
 
     /**
-     * Método principal: Selecciona el próximo PCB para la CPU
-     * basado en el algoritmo activo.
-     * @return El PCB seleccionado para ejecución o null si la cola está vacía.
+     * Método principal para seleccionar el próximo PCB a despachar a la CPU.
+     * @param globalClock El ciclo actual del SO (necesario para HRRN).
+     * @return El PCB seleccionado y *removido* de la cola de listos, o null.
      */
-    public PCB selectNextProcess() {
+    public PCB schedule(long globalClock) {
         if (readyQueue.isEmpty()) {
             return null;
         }
 
-        // Usamos el switch para aplicar la lógica específica
+        PCB selectedPcb = null;
+
         switch (activeAlgorithm) {
             case FCFS:
-                return _selectFCFS();
-            case SJF_NON_PREEMPTIVE:
-            case SJF_PREEMPTIVE:
-                return _selectSJF(); 
             case ROUND_ROBIN:
-                return readyQueue.verFrente(); 
+                // FCFS/Round Robin: Sacar el proceso del frente (FIFO)
+                selectedPcb = readyQueue.sacar(); 
+                break;
+
+            case SJF_NON_PREEMPTIVE:
+            case SJF_PREEMPTIVE: 
             case PRIORITY_NON_PREEMPTIVE:
             case PRIORITY_PREEMPTIVE:
-                // Lógica de Prioridad: Asumimos FCFS por defecto hasta la implementación
-                return _selectFCFS(); 
-            default:
-                return _selectFCFS(); 
+            case HRRN:
+                // Algoritmos que requieren buscar, encontrar y remover.
+                selectedPcb = _selectAdvancedPolicy(globalClock);
+                break;
         }
+        
+        return selectedPcb;
     }
-    
-    // --- Métodos de Implementación de Algoritmos (Stubs) ---
-    
-    private PCB _selectFCFS() {
-        return readyQueue.verFrente(); 
-    }
-    
-    private PCB _selectSJF() {
-        // NOTA: Implementación real de SJF requiere iterar la Cola para encontrar el PCB
-        // con el menor 'ciclosRestantes'. Por ahora, solo retorna el frente.
-        return readyQueue.verFrente(); 
+
+    /**
+     * Lógica para SJF/SRT, HRRN, y Prioridad.
+     * Itera la cola para encontrar el mejor PCB, lo remueve de la cola y lo retorna.
+     */
+    private PCB _selectAdvancedPolicy(long globalClock) {
+        PCB bestPcb = null;
+        // Se usa INT_MAX para buscar el menor (tiempo), y -1.0 para buscar el mayor (ratio).
+        int bestMetric = Integer.MAX_VALUE; 
+        double bestRatio = -1.0; 
+
+        Node current = readyQueue.getHead();
+
+        while (current != null) {
+            PCB pcb = current.getPcb();
+
+            switch (activeAlgorithm) {
+                case SJF_NON_PREEMPTIVE:
+                case SJF_PREEMPTIVE:
+                    // Criterio: Menor cantidad de ciclos restantes (Shortest Remaining Time)
+                    if (pcb.getCiclosRestantes() < bestMetric) {
+                        bestMetric = pcb.getCiclosRestantes();
+                        bestPcb = pcb;
+                    }
+                    break;
+                case PRIORITY_NON_PREEMPTIVE:
+                case PRIORITY_PREEMPTIVE:
+                    // Criterio: Mayor prioridad (asumiendo que un valor *más alto* es mejor)
+                    if (pcb.getPriority() > bestMetric) {
+                        bestMetric = pcb.getPriority();
+                        bestPcb = pcb;
+                    }
+                    break;
+                case HRRN:
+                    // Criterio: Mayor Ratio de Respuesta (R = (W + S) / S)
+                    
+                    // W (Waiting Time) = Ciclo Actual - Tiempo Llegada - Tiempo Ejecutado
+                    long waitingTime = globalClock - pcb.getArrivalTime() - pcb.getTiempoEnCPUAcumulado();
+                    int ciclosRestantes = pcb.getCiclosRestantes(); 
+                    
+                    if (ciclosRestantes > 0) {
+                        double responseRatio = (double)(waitingTime + ciclosRestantes) / ciclosRestantes;
+                        
+                        if (responseRatio > bestRatio) {
+                            bestRatio = responseRatio;
+                            bestPcb = pcb;
+                        }
+                    }
+                    break;
+            }
+            current = current.getNext();
+        }
+
+        // Una vez encontrado el mejor PCB, lo REMOVEMOS de la cola usando su ID.
+        if (bestPcb != null) {
+            return readyQueue.removerPorId(bestPcb.getId());
+        }
+        return null;
     }
     
     /**
      * Reinserta un proceso en la Cola de Listos después de desalojo o E/S.
-     * @param pcb El proceso a reinsertar.
      */
     public void reinsertProcess(PCB pcb) {
-        // Aseguramos que el estado sea 'READY' antes de reinsertar
         pcb.setStatus(ProcessStatus.READY); 
         
-        if (activeAlgorithm == SchedulingAlgorithm.ROUND_ROBIN) {
-            // El proceso desalojado vuelve al final.
-            readyQueue.agregar(pcb);
-        } else {
-            // Lógica de inserción ordenada (SJF, Prioridad) o al final (FCFS/Default)
-            // Se asume FCFS hasta la implementación completa.
-            readyQueue.agregar(pcb); 
-        }
+        // Simplemente se agrega al final. 
+        // Para FCFS/RR es correcto. Para los demás, el próximo 'schedule' elegirá el mejor.
+        readyQueue.agregar(pcb); 
     }
 
 
@@ -112,13 +149,5 @@ public class Scheduler {
 
     public SchedulingAlgorithm getActiveAlgorithm() {
         return activeAlgorithm;
-    }
-
-    public int getTimeQuantum() {
-        return timeQuantum;
-    }
-
-    public void setTimeQuantum(int timeQuantum) {
-        this.timeQuantum = timeQuantum;
     }
 }

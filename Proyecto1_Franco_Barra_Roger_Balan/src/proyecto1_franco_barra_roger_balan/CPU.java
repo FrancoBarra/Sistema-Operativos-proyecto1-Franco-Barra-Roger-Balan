@@ -5,12 +5,6 @@
 package proyecto1_franco_barra_roger_balan;
 
 /**
- *
- * @author frank
- */
-// Archivo: CPU.java
-
-/**
  * Clase CPU: Simula el hardware del procesador. Es un recurso pasivo que
  * ejecuta el PCB actualmente despachado y rastrea el quantum de tiempo.
  */
@@ -40,29 +34,34 @@ public class CPU {
     }
 
     /**
-     * Ejecuta una unidad de trabajo (un ciclo de reloj).
-     * @return El PCB que debe salir de la CPU (por interrupción, E/S, o terminación), o null.
+     * Simula la ejecución de una instrucción (un ciclo de reloj).
+     * @return El PCB desalojado si la ejecución termina, se bloquea, o expira el quantum,
+     * o null si el proceso continúa en ejecución.
      */
     public PCB executeCycle() {
         if (currentProcess == null) {
-            return null; // CPU Inactiva
+            return null;
         }
 
-        // 1. Simular Ejecución
-        currentProcess.executeInstruction();
-        this.quantumCounter++;
+        // 1. Ejecutar instrucción y actualizar contadores
+        currentProcess.incrementarProgramCounter();
+        currentProcess.decrementarCiclosRestantes();
+        this.quantumCounter++; // Se incrementa por cada ciclo de ejecución
 
-        // 2. Revisar si hay Terminación
+        // 2. Revisar si Termina
         if (currentProcess.getCiclosRestantes() <= 0) {
             currentProcess.setStatus(ProcessStatus.TERMINATED);
             return endExecution();
         }
 
-        // 3. Revisar si hay Solicitud de E/S
+        // 3. Revisar si hay Solicitud de E/S (Excepción)
         if (currentProcess.getType() == ProcessType.IO_BOUND) {
+             // Comprueba si el PC ha alcanzado un múltiplo del ciclo de excepción
              if (currentProcess.getProgramCounter() > 0 && 
                  currentProcess.getProgramCounter() % currentProcess.getCiclosParaExcepcion() == 0) {
                 
+                // Inicializa el contador de espera de E/S
+                currentProcess.setCiclosIOEspera(currentProcess.getCiclosParaSatisfacerIO());
                 currentProcess.setStatus(ProcessStatus.BLOCKED);
                 return endExecution(); // Desalojo por E/S
             }
@@ -70,11 +69,12 @@ public class CPU {
 
         // 4. Revisar si hay Interrupción por Quantum (solo si el quantum se alcanzó)
         if (this.quantumCounter >= this.quantumSize) {
-             // El SO/Scheduler debe manejar esto. Aquí solo indicamos que el tiempo ha expirado.
+             // El estado permanece RUNNING. El SO detectará que fue desalojado (expelledPcb != null)
+             // y lo cambiará a READY antes de reinsertarlo.
              return endExecution(); 
         }
 
-        return null; // El proceso continúa
+        return null; // El proceso continúa en RUNNING
     }
     
     /**
@@ -89,15 +89,12 @@ public class CPU {
     }
     
     // --- Getters ---
+    
     public PCB getCurrentProcess() {
         return currentProcess;
     }
     
     public boolean isBusy() {
         return currentProcess != null;
-    }
-    
-    public int getQuantumCounter() {
-        return quantumCounter;
     }
 }
