@@ -8,6 +8,25 @@ import java.awt.Dimension;
  *
  * @author frank
  */
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.Timer;
+// (Los JTextPane, JLabel, etc. no se importan aquí)
+
+// --- Imports de AWT (para la nueva línea 'Dimension') ---
+
+
+// --- Imports de IO (para cargar el archivo) ---
+import java.io.File; // <-- ¡NUEVO!
+import java.io.BufferedReader; // <-- ¡NUEVO!
+import java.io.FileReader; // <-- ¡NUEVO!
+import java.io.FileNotFoundException; // <-- ¡NUEVO!
+
+// (Probablemente también necesites estos para los botones)
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.FileWriter;
+import java.io.IOException;
 public class GUI extends javax.swing.JFrame {
     
     private SistemaOperativo so;
@@ -17,34 +36,66 @@ public class GUI extends javax.swing.JFrame {
     
     public GUI() {
         initComponents();
-        txtAreaReady.setContentType("text/html");
-        txtAreaBlocked.setContentType("text/html");
-        txtAreaTerminados.setContentType("text/html");
+    
+    // --- 1. Configuración de JTextPane ---
+    txtAreaReady.setContentType("text/html");
+    txtAreaBlocked.setContentType("text/html");
+    txtAreaTerminados.setContentType("text/html");
+    txtAreaReady.setBackground(new java.awt.Color(240, 240, 240)); 
+    txtAreaBlocked.setBackground(new java.awt.Color(240, 240, 240));
+    txtAreaTerminados.setBackground(new java.awt.Color(240, 240, 240));
 
-        // Hacemos que el fondo combine con el resto de la GUI
-        txtAreaReady.setBackground(new java.awt.Color(240, 240, 240)); // Un gris claro
-        txtAreaBlocked.setBackground(new java.awt.Color(240, 240, 240));
-        txtAreaTerminados.setBackground(new java.awt.Color(240, 240, 240));
-        // ---------------------
+    // --- 2. Ubicación de la ventana ---
+    this.setLocationRelativeTo(null); // (Borré la línea duplicada)
 
-    this.setLocationRelativeTo(null);
-        this.setLocationRelativeTo(null); 
-        for (Scheduler.SchedulingAlgorithm algo : Scheduler.SchedulingAlgorithm.values()) {
-        // (Asegúrate de importar Scheduler.SchedulingAlgorithm)
+    // --- 3. Llenar ComboBox ---
+    for (Scheduler.SchedulingAlgorithm algo : Scheduler.SchedulingAlgorithm.values()) {
         cmbAlgoritmo.addItem(algo.toString()); 
     }
 
-        // Configuración inicial de botones
-        btnIniciar.setEnabled(false); // No se puede iniciar sin cargar un CSV
-        btnPausar.setEnabled(false);
-        btnDetener.setEnabled(false);
+    // --- 4. Spinners (Valores por defecto Y tu código de tamaño) ---
+    spinnerCicloMs.setValue(100);
+    int ancho=80;
+    int alto=spinnerCicloMs.getPreferredSize().height;
+    // (Esta línea necesita: import java.awt.Dimension;)
+    spinnerCicloMs.setPreferredSize(new Dimension(ancho,alto));
+    spinnerQuantum.setValue(5);
+    
+    // --- 5. ¡NUEVO CÓDIGO DE CARGA! ---
+    // (Esto intentará sobreescribir los valores por defecto)
+    // (Este bloque necesita los imports de java.io.*)
+    try {
+        java.io.File configFile = new java.io.File("sim_config.csv");
+        if (configFile.exists()) {
+            java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(configFile));
+            String configLine = reader.readLine();
+            reader.close();
 
-        // (Opcional) Poner un valor inicial a los spinners
-        spinnerCicloMs.setValue(100);
-        int ancho=80;
-        int alto=spinnerCicloMs.getPreferredSize().height;
-        spinnerCicloMs.setPreferredSize(new Dimension(ancho,alto));
-        spinnerQuantum.setValue(5);
+            if (configLine != null) {
+                String[] parts = configLine.split(",");
+                if (parts.length == 3) {
+                    // ¡Cargamos los valores guardados!
+                    cmbAlgoritmo.setSelectedItem(parts[0]);
+                    spinnerCicloMs.setValue(Integer.parseInt(parts[1]));
+                    spinnerQuantum.setValue(Integer.parseInt(parts[2]));
+                    System.out.println("Configuración cargada desde sim_config.csv");
+                }
+            }
+        }
+    } catch (java.io.FileNotFoundException e) {
+        // Es normal si es la primera vez, nos quedamos con los defaults
+    } catch (Exception e) {
+        // Si el archivo está corrupto, lo ignoramos y usamos defaults
+        System.err.println("No se pudo cargar sim_config.csv: " + e.getMessage());
+    }
+    // --- FIN DEL NUEVO CÓDIGO ---
+
+    // --- 6. Configuración inicial de botones ---
+    btnIniciar.setEnabled(false); 
+    btnPausar.setEnabled(false);
+    btnDetener.setEnabled(false);
+        
+        
     }
     
     private void actualizarVistasGUI() {
@@ -121,6 +172,7 @@ public class GUI extends javax.swing.JFrame {
         btnIniciar = new javax.swing.JButton();
         btnPausar = new javax.swing.JButton();
         btnDetener = new javax.swing.JButton();
+        btnGuardarConfig = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
         lblRelojGlobal = new javax.swing.JLabel();
@@ -257,6 +309,14 @@ public class GUI extends javax.swing.JFrame {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(26, 40, 100, 0);
         jPanel1.add(btnDetener, gridBagConstraints);
+
+        btnGuardarConfig.setText("Guardar");
+        btnGuardarConfig.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnGuardarConfigActionPerformed(evt);
+            }
+        });
+        jPanel1.add(btnGuardarConfig, new java.awt.GridBagConstraints());
 
         jPanel3.setBackground(new java.awt.Color(99, 128, 169));
         jPanel3.setBorder(javax.swing.BorderFactory.createEtchedBorder(java.awt.Color.cyan, null));
@@ -690,6 +750,36 @@ public class GUI extends javax.swing.JFrame {
     javax.swing.JOptionPane.showMessageDialog(this, "Simulación detenida.");
     }//GEN-LAST:event_btnDetenerActionPerformed
 
+    private void btnGuardarConfigActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarConfigActionPerformed
+        // TODO add your handling code here:
+        String algoritmo = (String) cmbAlgoritmo.getSelectedItem();
+    int cicloMs = (Integer) spinnerCicloMs.getValue();
+    int quantum = (Integer) spinnerQuantum.getValue();
+
+    // 2. Crear el contenido del CSV (una sola línea: Algoritmo,Ciclo,Quantum)
+    String csvLine = algoritmo + "," + cicloMs + "," + quantum;
+
+    // 3. Usar FileWriter para guardar el archivo
+    // (Asegúrate de importar java.io.FileWriter y java.io.IOException)
+    try (java.io.FileWriter writer = new java.io.FileWriter("sim_config.csv")) {
+        writer.write(csvLine); // Escribimos la línea
+
+        // (Asegúrate de importar javax.swing.JOptionPane)
+        javax.swing.JOptionPane.showMessageDialog(this, 
+                "¡Configuración guardada en 'sim_config.csv'!", 
+                "Guardado", 
+                javax.swing.JOptionPane.INFORMATION_MESSAGE);
+
+    } catch (java.io.IOException e) {
+        // Manejar error si no se puede guardar
+        javax.swing.JOptionPane.showMessageDialog(this, 
+                "Error al guardar la configuración: " + e.getMessage(), 
+                "Error", 
+                javax.swing.JOptionPane.ERROR_MESSAGE);
+        e.printStackTrace();
+    }
+    }//GEN-LAST:event_btnGuardarConfigActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -729,6 +819,7 @@ public class GUI extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCargarCSV;
     private javax.swing.JButton btnDetener;
+    private javax.swing.JButton btnGuardarConfig;
     private javax.swing.JButton btnIniciar;
     private javax.swing.JButton btnPausar;
     private javax.swing.JComboBox<String> cmbAlgoritmo;
