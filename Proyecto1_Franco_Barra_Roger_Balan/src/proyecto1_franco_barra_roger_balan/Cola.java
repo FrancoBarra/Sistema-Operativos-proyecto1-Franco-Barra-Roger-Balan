@@ -124,32 +124,56 @@ public class Cola {
      * NUEVO MÉTODO: Retorna una representación en String de la cola
      * Útil para debugging y para la GUI
      */
-    public String toString() {
-        if (isEmpty()) {
-            return "Cola vacía";
-        }
-        
-        StringBuilder sb = new StringBuilder();
-        Node current = this.head;
-        int count = 0;
-        
-        while (current != null) {
-            PCB pcb = current.getPcb();
-            sb.append("[").append(count).append("] ")
-              .append(pcb.getName())
-              .append(" (ID: ").append(pcb.getId()).append(")")
-              .append(" - Ciclos restantes: ").append(pcb.getCiclosRestantes());
-            
-            if (current.getNext() != null) {
-                sb.append(" -> ");
-            }
-            
-            current = current.getNext();
-            count++;
-        }
-        
-        return sb.toString();
+    @Override
+public String toString() {
+    if (isEmpty()) {
+        // Un HTML simple para "Cola vacía"
+        return "<html><body style='font-family: Segoe UI; font-size: 10pt; color: #888888;'><i>Cola vacía</i></body></html>";
     }
+
+    // Usamos StringBuilder para construir el HTML
+    StringBuilder sb = new StringBuilder();
+
+    // Estilos CSS para que se vea como en la imagen
+    sb.append("<html><body style='font-family: Segoe UI; font-size: 10pt;'>");
+
+    Node current = this.head;
+
+    while (current != null) {
+        PCB pcb = current.getPcb();
+
+        // Definimos colores según el estado (¡puedes cambiarlos!)
+        String estadoColor = "#000000"; // Negro por defecto
+        if (pcb.getStatus() == ProcessStatus.READY) {
+            estadoColor = "#008800"; // Verde
+        } else if (pcb.getStatus() == ProcessStatus.BLOCKED) {
+            estadoColor = "#DD8800"; // Naranja
+        } else if (pcb.getStatus() == ProcessStatus.TERMINATED) {
+            estadoColor = "#CC0000"; // Rojo
+        }
+
+        // Construimos la línea para este PCB
+        sb.append("<p style='margin: 0; padding: 2px;'>"); // Párrafo sin margen
+        sb.append("<b>").append(pcb.getName()).append("</b>"); // Nombre en negrita
+        sb.append(" (ID: ").append(pcb.getId()).append(")");
+
+        // Estado con color
+        sb.append(" - Estado: <font color='").append(estadoColor).append("'><b>")
+          .append(pcb.getStatus().toString()).append("</b></font>");
+
+        // Ciclos y PC
+        sb.append(" - Ciclos: ").append(pcb.getCiclosRestantes());
+        sb.append(" (PC: ").append(pcb.getProgramCounter()).append(")");
+
+        sb.append("</p>"); // Cerramos el párrafo
+
+        current = current.getNext();
+    }
+
+    sb.append("</body></html>"); // Cerramos el HTML
+
+    return sb.toString();
+}
 
     public Node getTail() {
         return tail;

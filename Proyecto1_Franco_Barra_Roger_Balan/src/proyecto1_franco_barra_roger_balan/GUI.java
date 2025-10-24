@@ -17,7 +17,17 @@ public class GUI extends javax.swing.JFrame {
     
     public GUI() {
         initComponents();
-        
+        txtAreaReady.setContentType("text/html");
+        txtAreaBlocked.setContentType("text/html");
+        txtAreaTerminados.setContentType("text/html");
+
+        // Hacemos que el fondo combine con el resto de la GUI
+        txtAreaReady.setBackground(new java.awt.Color(240, 240, 240)); // Un gris claro
+        txtAreaBlocked.setBackground(new java.awt.Color(240, 240, 240));
+        txtAreaTerminados.setBackground(new java.awt.Color(240, 240, 240));
+        // ---------------------
+
+    this.setLocationRelativeTo(null);
         this.setLocationRelativeTo(null); 
         for (Scheduler.SchedulingAlgorithm algo : Scheduler.SchedulingAlgorithm.values()) {
         // (Asegúrate de importar Scheduler.SchedulingAlgorithm)
@@ -120,11 +130,11 @@ public class GUI extends javax.swing.JFrame {
         jLabel10 = new javax.swing.JLabel();
         jLabel11 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        txtAreaBlocked = new javax.swing.JTextArea();
+        txtAreaBlocked = new javax.swing.JTextPane();
         jScrollPane3 = new javax.swing.JScrollPane();
-        txtAreaReady = new javax.swing.JTextArea();
+        txtAreaReady = new javax.swing.JTextPane();
         jScrollPane2 = new javax.swing.JScrollPane();
-        txtAreaTerminados = new javax.swing.JTextArea();
+        txtAreaTerminados = new javax.swing.JTextPane();
         jPanel4 = new javax.swing.JPanel();
         jLabel12 = new javax.swing.JLabel();
         lblThroughput = new javax.swing.JLabel();
@@ -265,21 +275,13 @@ public class GUI extends javax.swing.JFrame {
 
         jLabel11.setText("Cola Ready");
 
-        txtAreaBlocked.setEditable(false);
         txtAreaBlocked.setBackground(new java.awt.Color(204, 204, 204));
-        txtAreaBlocked.setColumns(20);
-        txtAreaBlocked.setRows(5);
         jScrollPane1.setViewportView(txtAreaBlocked);
 
-        txtAreaReady.setEditable(false);
         txtAreaReady.setBackground(new java.awt.Color(204, 204, 204));
-        txtAreaReady.setColumns(20);
-        txtAreaReady.setRows(5);
         jScrollPane3.setViewportView(txtAreaReady);
 
         txtAreaTerminados.setBackground(new java.awt.Color(204, 204, 204));
-        txtAreaTerminados.setColumns(20);
-        txtAreaTerminados.setRows(5);
         jScrollPane2.setViewportView(txtAreaTerminados);
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
@@ -759,9 +761,9 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JLabel lblUtilizacionCPU;
     private javax.swing.JSpinner spinnerCicloMs;
     private javax.swing.JSpinner spinnerQuantum;
-    private javax.swing.JTextArea txtAreaBlocked;
-    private javax.swing.JTextArea txtAreaReady;
-    private javax.swing.JTextArea txtAreaTerminados;
+    private javax.swing.JTextPane txtAreaBlocked;
+    private javax.swing.JTextPane txtAreaReady;
+    private javax.swing.JTextPane txtAreaTerminados;
     private javax.swing.JTextField txtRutaCSV;
     // End of variables declaration//GEN-END:variables
 }
