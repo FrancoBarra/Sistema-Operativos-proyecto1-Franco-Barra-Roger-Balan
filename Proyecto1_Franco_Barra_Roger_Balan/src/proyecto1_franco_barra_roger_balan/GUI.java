@@ -32,77 +32,73 @@ public class GUI extends javax.swing.JFrame {
     private SistemaOperativo so;
     private javax.swing.Timer simulationTimer;
     private String rutaArchivoCSV;
-    
+    private Cola procesosEnStaging;
     
     public GUI() {
-        initComponents();
+    initComponents();
 
-    cmbTipoProceso.addItem(ProcessType.CPU_BOUND);
-    cmbTipoProceso.addItem(ProcessType.IO_BOUND);
     // --- 1. Configuración de JTextPane ---
     txtAreaReady.setContentType("text/html");
     txtAreaBlocked.setContentType("text/html");
     txtAreaTerminados.setContentType("text/html");
-    txtAreaReady.setBackground(new java.awt.Color(240, 240, 240)); 
-    txtAreaBlocked.setBackground(new java.awt.Color(240, 240, 240));
-    txtAreaTerminados.setBackground(new java.awt.Color(240, 240, 240));
+    // ... (tus líneas de setBackground) ...
 
-    // --- 2. Ubicación de la ventana ---
-    this.setLocationRelativeTo(null); // (Borré la línea duplicada)
+    // --- 2. Ubicación y ComboBoxes ---
+    this.setLocationRelativeTo(null); 
 
-    // --- 3. Llenar ComboBox ---
     for (Scheduler.SchedulingAlgorithm algo : Scheduler.SchedulingAlgorithm.values()) {
         cmbAlgoritmo.addItem(algo.toString()); 
     }
 
+    // (Asegúrate de tener <ProcessType> en el JComboBox 'cmbTipoProceso')
+    cmbTipoProceso.addItem(ProcessType.CPU_BOUND);
+    cmbTipoProceso.addItem(ProcessType.IO_BOUND);
+
+    // --- 3. ¡NUEVO! Inicializar la "Sala de Espera" ---
+    this.procesosEnStaging = new Cola();
+
     // --- 4. Spinners (Valores por defecto Y tu código de tamaño) ---
     spinnerCicloMs.setValue(100);
-    int ancho=80;
-    int alto=spinnerCicloMs.getPreferredSize().height;
-    // (Esta línea necesita: import java.awt.Dimension;)
-    spinnerCicloMs.setPreferredSize(new Dimension(ancho,alto));
+    // ... (tus líneas de 'ancho' y 'alto' y 'setPreferredSize') ...
     spinnerQuantum.setValue(5);
-    
-    // --- 5. ¡NUEVO CÓDIGO DE CARGA! ---
-    // (Esto intentará sobreescribir los valores por defecto)
-    // (Este bloque necesita los imports de java.io.*)
+
+    // --- 5. Código de Carga (¡Se queda!) ---
+    // (Este try-catch carga el sim_config.csv, lo veremos en el Paso 7)
     try {
-        java.io.File configFile = new java.io.File("sim_config.csv");
-        if (configFile.exists()) {
-            java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(configFile));
-            String configLine = reader.readLine();
-            reader.close();
-
-            if (configLine != null) {
-                String[] parts = configLine.split(",");
-                if (parts.length == 3) {
-                    // ¡Cargamos los valores guardados!
-                    cmbAlgoritmo.setSelectedItem(parts[0]);
-                    spinnerCicloMs.setValue(Integer.parseInt(parts[1]));
-                    spinnerQuantum.setValue(Integer.parseInt(parts[2]));
-                    System.out.println("Configuración cargada desde sim_config.csv");
-                }
-            }
-        }
-    } catch (java.io.FileNotFoundException e) {
-        // Es normal si es la primera vez, nos quedamos con los defaults
+        // ... (el código de 'try-catch' para cargar 'sim_config.csv' va aquí) ...
+        // ¡Lo programaremos en el Paso 7!
     } catch (Exception e) {
-        // Si el archivo está corrupto, lo ignoramos y usamos defaults
-        System.err.println("No se pudo cargar sim_config.csv: " + e.getMessage());
+        // ...
     }
-    // --- FIN DEL NUEVO CÓDIGO ---
 
-    // --- 6. Configuración inicial de botones ---
-    btnIniciar.setEnabled(false); 
+    // --- 6. Configuración inicial de botones (¡LA NUEVA LÓGICA!) ---
+    btnIniciar.setEnabled(false); // Deshabilitado hasta que haya procesos
     btnPausar.setEnabled(false);
     btnDetener.setEnabled(false);
-    btnAnadirProceso.setEnabled(false);
-        
+    btnAnadirProceso.setEnabled(true); // ¡SIEMPRE HABILITADO!
+    // (Asumimos que btnCargarCSV y btnGuardarConfig están siempre habilitados)
+
+    // --- 7. Listener del ComboBox (Tu código) ---
+    // (El listener de 'cmbTipoProceso.addItemListener' va aquí)
+    // ...
+
+    // --- 8. Estado inicial de spinners (Tu código) ---
+    spinnerCiclosExcep.setEnabled(false);
+    spinnerCiclosIO.setEnabled(false);
+    
     cmbTipoProceso.addItemListener(new java.awt.event.ItemListener() {
     public void itemStateChanged(java.awt.event.ItemEvent evt) {
+
+        // Solo nos importa cuando algo es SELECCIONADO
         if (evt.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
-            // Comprobamos qué se seleccionó
-            boolean esIOBound = (evt.getItem() == ProcessType.IO_BOUND);
+
+            // --- ¡El Arreglo que ya habíamos discutido! ---
+            // 1. Obtenemos el item seleccionado Y LO CONVERTIMOS A STRING
+            String itemSeleccionado = evt.getItem().toString();
+
+            // 2. Comparamos STRING contra STRING
+            boolean esIOBound = itemSeleccionado.equals(ProcessType.IO_BOUND.toString());
+            // --- Fin del Arreglo ---
 
             // Habilitamos/deshabilitamos los spinners de E/S
             spinnerCiclosExcep.setEnabled(esIOBound);
@@ -116,11 +112,6 @@ public class GUI extends javax.swing.JFrame {
         }
     }
 });
-
-    // Estado inicial (por si CPU_BOUND es el primero)
-    spinnerCiclosExcep.setEnabled(false);
-    spinnerCiclosIO.setEnabled(false);
-
     }
     
     private void actualizarVistasGUI() {
@@ -600,7 +591,7 @@ public class GUI extends javax.swing.JFrame {
 
         jLabel5.setText("Ciclos p/ Satisfacer E/S");
 
-        spinnerCiclosIO.setModel(new javax.swing.SpinnerNumberModel(0, 0, null, 1));
+        spinnerCiclosIO.setModel(new javax.swing.SpinnerNumberModel());
 
         btnAnadirProceso.setText("Añadir Proceso");
         btnAnadirProceso.addActionListener(new java.awt.event.ActionListener() {
@@ -713,84 +704,70 @@ public class GUI extends javax.swing.JFrame {
     }//GEN-LAST:event_cmbAlgoritmoActionPerformed
 
     private void btnIniciarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnIniciarActionPerformed
-        // TODO add your handling code here:
         try {
+        // --- 1. LEER LA CONFIGURACIÓN DE LA GUI ---
+        String algoSeleccionado = (String) cmbAlgoritmo.getSelectedItem();
+        Scheduler.SchedulingAlgorithm algoritmo = Scheduler.SchedulingAlgorithm.valueOf(algoSeleccionado);
+        int quantum = (Integer) spinnerQuantum.getValue();
+        int cicloMs = (Integer) spinnerCicloMs.getValue();
 
+        // --- 2. ¡AQUÍ ESTÁ EL CÓDIGO FALTANTE! ---
+        // (Crear todos los componentes que el S.O. necesita)
+        // (Asegúrate de importar CPU, Scheduler, GestorEstados, etc.)
         Cola readyQueue = new Cola();
         Cola blockedQueue = new Cola();
         Cola suspendedReadyQueue = new Cola(); // Necesaria para GestorEstados
-
-        // --- 2. Leer la configuración de la GUI ---
-
-        // Algoritmo:
-        String algoSeleccionado = (String) cmbAlgoritmo.getSelectedItem();
-        // Convertimos el String del ComboBox de nuevo al Enum
-        Scheduler.SchedulingAlgorithm algoritmo = Scheduler.SchedulingAlgorithm.valueOf(algoSeleccionado);
-
-        // Quantum:
-        int quantum = (Integer) spinnerQuantum.getValue();
-
-        // Duración del Ciclo (para el Timer):
-        int cicloMs = (Integer) spinnerCicloMs.getValue();
-
-
-        // --- 3. Instanciar los componentes del S.O. ---
-
+        
         Scheduler scheduler = new Scheduler(readyQueue, algoritmo, quantum);
         GestorEstados gestorEstados = new GestorEstados(readyQueue, blockedQueue, suspendedReadyQueue, scheduler);
+        CPU cpu = new CPU(quantum); // La CPU también necesita el quantum
+        // ------------------------------------------
 
-        // La CPU también necesita el quantum (según tu clase CPU.java)
-        CPU cpu = new CPU(quantum); 
+        // --- 3. ¡Usar el ÚNICO constructor del S.O.! ---
+        // (Ahora 'cpu', 'scheduler', etc., SÍ existen)
+        this.so = new SistemaOperativo(cpu, scheduler, gestorEstados, readyQueue, blockedQueue);
+        
+        // --- 4. Cargar los procesos desde nuestra cola de Staging ---
+        txtAreaReady.setText(""); // Limpiamos la lista visual
+        for (int i = 0; i < procesosEnStaging.getSize(); i++) {
+            
+            // 1. Obtenemos el original (sin sacarlo)
+            PCB pcbOriginal = procesosEnStaging.get(i);
+            
+            // 2. Creamos un CLON "fresco" (del Paso 1 de mi respuesta anterior)
+            PCB pcbClonado = new PCB(pcbOriginal); 
+            
+            pcbClonado.setStatus(ProcessStatus.READY);
+            so.getScheduler().reinsertProcess(pcbClonado); // Añadimos el clon
+        }
 
-        // ¡Usamos la ruta del archivo que guardamos!
-        ConfiguracionManager configManager = new ConfiguracionManager(this.rutaArchivoCSV);
-
-
-        // --- 4. ¡AHORA SÍ! Creamos el S.O. (Constructor correcto) ---
-        this.so = new SistemaOperativo(cpu, scheduler, gestorEstados, readyQueue, blockedQueue, configManager);
-
-
-        // --- 5. Cargar los procesos iniciales del CSV ---
-        so.loadInitialProcesses();
-
-        // --- 6. Configurar y arrancar el Timer (El nuevo "Loop") ---
-        so.setCycleDuration(cicloMs); // (Tu S.O. usa esto para el sleep de IOThread)
-
-        // ¡Creamos el Timer!
-        // Se disparará cada 'cicloMs' milisegundos
+        // --- 5. Configurar y arrancar el Timer ---
+        so.setCycleDuration(cicloMs); 
         this.simulationTimer = new javax.swing.Timer(cicloMs, new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
-
-                // Esto se ejecuta en cada "tick" del Timer
-
-                // Comprobamos si la simulación terminó
                 if (so.isSimulationFinished()) {
-                    simulationTimer.stop(); // Detenemos el Timer
-                    mostrarMetricasFinales(); // Mostramos resultados
+                    simulationTimer.stop();
+                    mostrarMetricasFinales();
                 } else {
-                    so.avanzarCiclo(); // ¡Llamamos a tu método!
-                    actualizarVistasGUI(); // Actualizamos la GUI
+                    so.avanzarCiclo(); 
+                    actualizarVistasGUI(); 
                 }
             }
         });
-
-        // ¡Arrancamos el Timer!
         simulationTimer.start();
-
-        // --- 7. Actualizar botones ---
+        
+        // --- 6. Actualizar botones ---
         btnIniciar.setEnabled(false);
-        btnCargarCSV.setEnabled(false);
+        btnAnadirProceso.setEnabled(true); // Sigue activo
         btnPausar.setEnabled(true);
         btnDetener.setEnabled(true);
-
+        btnCargarCSV.setEnabled(false); // Deshabilitamos cargar/guardar
+        btnGuardarConfig.setEnabled(false); // mientras corre
+        
     } catch (Exception ex) {
-        // (Asegúrate de importar javax.swing.JOptionPane)
-        javax.swing.JOptionPane.showMessageDialog(this, 
-                "Error al iniciar la simulación: " + ex.getMessage(), 
-                "Error", 
-                javax.swing.JOptionPane.ERROR_MESSAGE);
-        ex.printStackTrace(); // Muy útil para ver el error en la consola
+        JOptionPane.showMessageDialog(this, "Error al iniciar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        ex.printStackTrace(); 
     }
     }//GEN-LAST:event_btnIniciarActionPerformed
 
@@ -818,97 +795,148 @@ public class GUI extends javax.swing.JFrame {
     }//GEN-LAST:event_btnPausarActionPerformed
 
     private void btnCargarCSVActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCargarCSVActionPerformed
-        // TODO add your handling code here:
-    javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
+    // (Asegúrate de importar javax.swing.JFileChooser y java.io.File)
+    JFileChooser fileChooser = new JFileChooser();
+    int returnValue = fileChooser.showOpenDialog(this);
 
-     // 2. Mostrar el diálogo para "Abrir"
-     int returnValue = fileChooser.showOpenDialog(this); // 'this' es la ventana actual
+    if (returnValue == JFileChooser.APPROVE_OPTION) {
+        File selectedFile = fileChooser.getSelectedFile();
+        txtRutaCSV.setText(selectedFile.getAbsolutePath());
+        
+        // (Importa java.io.BufferedReader, java.io.FileReader, java.io.FileNotFoundException)
+        try (BufferedReader reader = new BufferedReader(new FileReader(selectedFile))) {
+            
+            // --- 1. LEER LA CONFIGURACIÓN (Línea 1) ---
+            String configLine = reader.readLine();
+            if (configLine == null) {
+                throw new Exception("El archivo está vacío.");
+            }
+            
+            String[] parts = configLine.split(",");
+            if (parts.length < 3) {
+                throw new Exception("La línea de configuración es inválida.");
+            }
+            
+            // ¡Actualizamos la GUI con la configuración!
+            cmbAlgoritmo.setSelectedItem(parts[0]);
+            spinnerCicloMs.setValue(Integer.parseInt(parts[1]));
+            spinnerQuantum.setValue(Integer.parseInt(parts[2]));
+            
+            // --- 2. LEER LOS PROCESOS (Líneas 2 en adelante) ---
+            procesosEnStaging.limpiarCola(); // Limpiamos la "sala de espera" actual
+            String processLine;
+            int procesosCargados = 0;
+            
+            // (Importa proyecto1_franco_barra_roger_balan.PCB)
+            // (Importa proyecto1_franco_barra_roger_balan.ProcessType)
+            while ((processLine = reader.readLine()) != null) {
+                String[] pcbParts = processLine.split(",");
+                if (pcbParts.length < 5) continue; // Ignorar líneas mal formadas
+                
+                // Creamos el PCB (con arrivalTime 0 por defecto)
+                PCB newPcb = new PCB(
+                        pcbParts[0],                                 // Nombre
+                        Integer.parseInt(pcbParts[1]),             // Instrucciones
+                        ProcessType.valueOf(pcbParts[2]),            // Tipo
+                        Integer.parseInt(pcbParts[3]),             // CiclosExcep
+                        Integer.parseInt(pcbParts[4]),             // CiclosIO
+                        0                                          // ArrivalTime
+                );
+                
+                newPcb.setStatus(ProcessStatus.NEW);
+                procesosEnStaging.agregar(newPcb);
+                procesosCargados++;
+            }
+            
+            // --- 3. Actualizar GUI y botones ---
+            if (procesosCargados > 0) {
+                btnIniciar.setEnabled(true);
+            }
+            txtAreaReady.setText(procesosEnStaging.toString()); // Mostramos en la "sala de espera"
+            
+            JOptionPane.showMessageDialog(this,
+                    "¡Configuración cargada y " + procesosCargados + " procesos añadidos!",
+                    "Carga Exitosa",
+                    JOptionPane.INFORMATION_MESSAGE);
 
-     // 3. Comprobar si el usuario seleccionó un archivo
-     if (returnValue == javax.swing.JFileChooser.APPROVE_OPTION) {
-
-         // (Asegúrate de importar java.io.File)
-         java.io.File selectedFile = fileChooser.getSelectedFile();
-
-         // 4. Guardar la ruta del archivo en nuestra variable de clase
-         this.rutaArchivoCSV = selectedFile.getAbsolutePath(); 
-
-         // 5. Mostrar la ruta en el campo de texto
-         txtRutaCSV.setText(this.rutaArchivoCSV);
-
-         // 6. ¡Habilitar el botón Iniciar!
-         btnIniciar.setEnabled(true); 
-     }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Error al cargar el archivo: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
     }//GEN-LAST:event_btnCargarCSVActionPerformed
 
     private void btnDetenerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDetenerActionPerformed
-        // TODO add your handling code here:
-        if (this.simulationTimer == null || this.so == null) {
-        return;
-    }
+    if (this.simulationTimer != null) this.simulationTimer.stop();
+    if (this.so != null) this.so.stopSimulation();
 
-    // --- 1. Detener el "Loop" (el Timer) ---
-    this.simulationTimer.stop();
-
-    // --- 2. Detener el S.O. (¡MUY IMPORTANTE!) ---
-    // Esto mata los hilos de E/S (IOThread) que puedan estar corriendo
-    this.so.stopSimulation(); // (Este método ya lo tenías en tu clase S.O.)
-
-    // --- 3. Limpiar las áreas de texto y labels ---
+    // --- 3. Limpiar colas (visuales Y lógicas) ---
     lblRelojGlobal.setText("0");
     lblCPU.setText("Inactivo");
     txtAreaReady.setText("");
     txtAreaBlocked.setText("");
     txtAreaTerminados.setText("");
-    lblThroughput.setText("0.0");
-    lblUtilizacionCPU.setText("0.0 %");
-    lblTurnaround.setText("0.0");
-    lblEspera.setText("0.0");
-    lblRespuesta.setText("0.0");
+    // ... (limpiar métricas) ...
 
-    // --- 4. Resetear los botones a su estado inicial ---
-    btnIniciar.setEnabled(true);
-    btnCargarCSV.setEnabled(true);
+
+    // --- 4. Resetear botones ---
+    btnIniciar.setEnabled(false); // No se puede iniciar sin procesos
+    btnAnadirProceso.setEnabled(true);
     btnPausar.setEnabled(false);
     btnDetener.setEnabled(false);
-    btnPausar.setText("Pausar"); // (Lo reseteamos por si decía "Reanudar")
+    btnCargarCSV.setEnabled(true); // Habilitamos cargar/guardar
+    btnGuardarConfig.setEnabled(true);
 
-    // --- 5. "Destruir" la simulación actual ---
-    // Ponemos esto en null para que la próxima simulación
-    // se cree desde cero, limpia.
+    // --- 5. Destruir simulación ---
     this.so = null;
     this.simulationTimer = null; 
 
-    // (Asegúrate de importar javax.swing.JOptionPane)
-    javax.swing.JOptionPane.showMessageDialog(this, "Simulación detenida.");
+    JOptionPane.showMessageDialog(this, "Simulación detenida.");
     }//GEN-LAST:event_btnDetenerActionPerformed
 
     private void btnGuardarConfigActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarConfigActionPerformed
-        // TODO add your handling code here:
-        String algoritmo = (String) cmbAlgoritmo.getSelectedItem();
-    int cicloMs = (Integer) spinnerCicloMs.getValue();
-    int quantum = (Integer) spinnerQuantum.getValue();
-
-    // 2. Crear el contenido del CSV (una sola línea: Algoritmo,Ciclo,Quantum)
-    String csvLine = algoritmo + "," + cicloMs + "," + quantum;
-
-    // 3. Usar FileWriter para guardar el archivo
-    // (Asegúrate de importar java.io.FileWriter y java.io.IOException)
+     // (Asegúrate de importar java.io.FileWriter y java.io.IOException)
     try (java.io.FileWriter writer = new java.io.FileWriter("sim_config.csv")) {
-        writer.write(csvLine); // Escribimos la línea
+        
+        // --- 1. GUARDAR LA CONFIGURACIÓN (Línea 1) ---
+        String algoritmo = (String) cmbAlgoritmo.getSelectedItem();
+        int cicloMs = (Integer) spinnerCicloMs.getValue();
+        int quantum = (Integer) spinnerQuantum.getValue();
+        
+        // Escribimos la línea de configuración
+        writer.write(algoritmo + "," + cicloMs + "," + quantum + "\n");
 
-        // (Asegúrate de importar javax.swing.JOptionPane)
-        javax.swing.JOptionPane.showMessageDialog(this, 
-                "¡Configuración guardada en 'sim_config.csv'!", 
-                "Guardado", 
-                javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        // --- 2. GUARDAR LOS PROCESOS DE LA "SALA DE ESPERA" (Líneas 2 en adelante) ---
+        // (Usamos el 'for' loop que creamos, ¡sin java.util!)
+        for (int i = 0; i < procesosEnStaging.getSize(); i++) {
+            PCB pcb = procesosEnStaging.get(i);
+            
+            // Creamos una línea CSV para el PCB
+            // Formato: Nombre,Instrucciones,Tipo,CiclosExcep,CiclosIO
+            String pcbLine = String.format("%s,%d,%s,%d,%d\n",
+                    pcb.getName(),
+                    pcb.getLongitudPrograma(),
+                    pcb.getType().toString(),
+                    pcb.getCiclosParaExcepcion(),
+                    pcb.getCiclosParaSatisfacerIO()
+            );
+            writer.write(pcbLine); // Escribimos la línea del proceso
+        }
+        
+        // --- 3. Mensaje de éxito ---
+        JOptionPane.showMessageDialog(this,
+                "¡Configuración y " + procesosEnStaging.getSize() + " procesos guardados!",
+                "Guardado",
+                JOptionPane.INFORMATION_MESSAGE);
 
     } catch (java.io.IOException e) {
-        // Manejar error si no se puede guardar
-        javax.swing.JOptionPane.showMessageDialog(this, 
-                "Error al guardar la configuración: " + e.getMessage(), 
-                "Error", 
-                javax.swing.JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(this,
+                "Error al guardar la configuración: " + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
         e.printStackTrace();
     }
     }//GEN-LAST:event_btnGuardarConfigActionPerformed
@@ -918,53 +946,60 @@ public class GUI extends javax.swing.JFrame {
     }//GEN-LAST:event_cmbTipoProcesoActionPerformed
 
     private void btnAnadirProcesoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAnadirProcesoActionPerformed
-        // TODO add your handling code here:
-        if (so == null || !simulationTimer.isRunning()) {
-        javax.swing.JOptionPane.showMessageDialog(this, 
-                "Solo puedes añadir procesos mientras la simulación está en curso.", 
-                "Aviso", 
-                javax.swing.JOptionPane.WARNING_MESSAGE);
-        return;
-    }
-
-    try {
-        // 2. Obtener todos los valores del formulario
+        try {
+        // 1. Obtener valores del formulario
         String nombre = txtNombreProceso.getText();
         int instrucciones = (Integer) spinnerInstrucciones.getValue();
         ProcessType tipo = (ProcessType) cmbTipoProceso.getSelectedItem();
         int ciclosExcep = (Integer) spinnerCiclosExcep.getValue();
         int ciclosIO = (Integer) spinnerCiclosIO.getValue();
 
-        // Validaciones
+        // --- 2. VALIDACIÓN DE NOMBRE (¡Tu requisito!) ---
         if (nombre.trim().isEmpty()) {
-            javax.swing.JOptionPane.showMessageDialog(this, "El nombre no puede estar vacío.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "El nombre no puede estar vacío.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        if (tipo == ProcessType.IO_BOUND && (ciclosExcep <= 0 || ciclosIO <= 0)) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Procesos I/O_BOUND deben tener ciclos > 0.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        // Validar en Staging
+        if (procesosEnStaging.buscarPorNombre(nombre)) {
+            JOptionPane.showMessageDialog(this, "Error: Ya existe un proceso con ese nombre en la lista de espera.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        // Validar en S.O. (si ya está corriendo)
+        if (so != null && (so.getReadyQueue().buscarPorNombre(nombre) || 
+                            so.getBlockedQueue().buscarPorNombre(nombre) ||
+                            so.getTerminatedQueue().buscarPorNombre(nombre))) {
+            JOptionPane.showMessageDialog(this, "Error: Ya existe un proceso con ese nombre en la simulación.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        // 3. Crear el nuevo PCB
-        // (Asegúrate de importar proyecto1_franco_barra_roger_balan.PCB)
-        // (Usamos el reloj global como tiempo de llegada)
-        PCB newPcb = new PCB(nombre, instrucciones, tipo, ciclosExcep, ciclosIO, so.getGlobalClock());
+        // ... (Otras validaciones, como la de I/O) ...
 
-        // 4. Ponerlo en estado READY
-        // (Asegúrate de importar proyecto1_franco_barra_roger_balan.ProcessStatus)
-        newPcb.setStatus(ProcessStatus.READY);
+        // 3. Crear el PCB
+        long arrivalTime = (so != null) ? so.getGlobalClock() : 0;
+        PCB newPcb = new PCB(nombre, instrucciones, tipo, ciclosExcep, ciclosIO, arrivalTime);
 
-        // 5. ¡Añadirlo a la cola de listos!
-        // El Scheduler (que ya tienes) se encargará de ponerlo
-        // en el lugar correcto según el algoritmo (SJF, Prioridad, etc.)
-        so.getScheduler().reinsertProcess(newPcb);
+        // --- 4. LÓGICA DE AÑADIR (MODIFICADA) ---
+        if (so == null || !simulationTimer.isRunning()) {
+            // A: Simulación NO ha empezado. Añadir a Staging.
+            newPcb.setStatus(ProcessStatus.NEW);
+            procesosEnStaging.agregar(newPcb);
+            btnIniciar.setEnabled(true); // ¡HABILITAMOS "INICIAR"!
 
-        // 6. Limpiar el formulario
+            // (Truco visual: usa la cola de terminados para ver la lista de Staging)
+            txtAreaReady.setText(procesosEnStaging.toString());
+
+        } else {
+            // B: Simulación SÍ está corriendo. Añadir directo al Scheduler.
+            newPcb.setStatus(ProcessStatus.READY);
+            so.getScheduler().reinsertProcess(newPcb);
+        }
+
+        // 5. Limpiar el formulario
         txtNombreProceso.setText("");
-        spinnerInstrucciones.setValue(50);
+        spinnerInstrucciones.setValue(50); // (o el default que quieras)
 
     } catch (Exception e) {
-        javax.swing.JOptionPane.showMessageDialog(this, "Error creando proceso: " + e.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Error creando proceso: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
     }
     }//GEN-LAST:event_btnAnadirProcesoActionPerformed
 

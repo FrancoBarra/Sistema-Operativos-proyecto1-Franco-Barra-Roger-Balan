@@ -21,7 +21,6 @@ public class SistemaOperativo implements Runnable {
     private final CPU cpu;
     private final Scheduler scheduler;
     private final GestorEstados gestorEstados;
-    private final ConfiguracionManager configManager;
     private final GestorDeMetricas gestorMetricas;
     private GUI guiListener;
     
@@ -46,13 +45,13 @@ public class SistemaOperativo implements Runnable {
      * CONSTRUCTOR PRINCIPAL PARA LA GUI.
      */
     public SistemaOperativo(CPU cpu, Scheduler scheduler, GestorEstados gestorEstados,
-                            Cola readyQueue, Cola blockedQueue, ConfiguracionManager configManager) {
+                              Cola readyQueue, Cola blockedQueue) {
         
         // Asignación de componentes
         this.cpu = cpu;
         this.scheduler = scheduler;
         this.gestorEstados = gestorEstados;
-        this.configManager = configManager;
+        // (Ya no hay configManager)
         this.gestorMetricas = new GestorDeMetricas();
         
         // Asignación de colas
@@ -62,36 +61,20 @@ public class SistemaOperativo implements Runnable {
         this.suspendedReadyQueue = gestorEstados.getSuspendedReadyQueue();
 
         // Inicialización del rastreo manual de hilos (ahora con IOThread)
-        this.ioThreads = new IOThread[MAX_THREADS]; // Cambiado a IOThread[]
+        // (Asegúrate de tener estas constantes MAX_THREADS definidas en tu clase)
+        this.ioThreads = new IOThread[MAX_THREADS]; 
         this.ioThreadCount = 0;
         
         // Valores por defecto
         this.globalClock = 0;
-        this.cycleDuration = 100;
+        this.cycleDuration = 100; // La GUI lo ajustará con setCycleDuration()
         this.isRunning = false;
-        
-    }
-    
+        this.initialLoadCompleted = true; // Ya que no cargamos nada
+    }    
     /**
      * Carga los procesos iniciales desde el ConfiguracionManager.
      */
-    public void loadInitialProcesses() throws Exception {
-        if (initialLoadCompleted) return;
-        
-        SimulacionConfig config = configManager.cargarConfiguracion();
-        this.cycleDuration = config.getCycleDuration();
-        
-        // Cargar procesos en la cola de listos (NEW -> READY)
-        PCB[] initialPCBs = config.getInitialProcesses();
-        for (int i = 0; i < initialPCBs.length; i++) {
-            PCB pcb = initialPCBs[i];
-            if (pcb != null) {
-                pcb.setStatus(ProcessStatus.READY);
-                scheduler.reinsertProcess(pcb);
-            }
-        }
-        initialLoadCompleted = true;
-    }
+   
     
     // =================================================================
     // --- LÓGICA DEL CICLO DE RELOJ (Llamado por el Timer de la GUI) ---

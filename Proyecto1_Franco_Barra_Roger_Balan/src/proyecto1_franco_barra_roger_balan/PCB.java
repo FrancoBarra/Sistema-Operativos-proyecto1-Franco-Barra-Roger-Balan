@@ -70,6 +70,30 @@ public class PCB {
         this.ciclosParaSatisfacerIO = ciclosParaSatisfacerIO;
         this.ciclosIOEspera = 0;
     }
+    public PCB(PCB original) {
+    // 1. Copiamos los valores de identificación e inmutables
+    this.id = original.id;
+    this.name = original.name;
+    this.arrivalTime = original.arrivalTime;
+    this.longitudPrograma = original.longitudPrograma;
+    this.type = original.type;
+    this.priority = original.priority;
+    this.ciclosParaExcepcion = original.ciclosParaExcepcion;
+    this.ciclosParaSatisfacerIO = original.ciclosParaSatisfacerIO;
+
+    // 2. ¡RESETEAMOS los valores de estado y métricas!
+    this.status = ProcessStatus.NEW; 
+    this.programCounter = 0;
+    this.memoryAddressRegister = 0;
+    this.ciclosRestantes = this.longitudPrograma; // Reseteado
+    this.ciclosIOEspera = 0;
+
+    this.tiempoFinalizacion = 0;
+    this.tiempoRespuesta = -1; // ¡Importante resetear a -1!
+    this.tiempoEsperaAcumulado = 0;
+    this.tiempoEnCPUAcumulado = 0;
+    this.tiempoEnBloqueadoAcumulado = 0;
+}
     
     // =========================================================================
     // --- SETTERS / MUTATORS ---

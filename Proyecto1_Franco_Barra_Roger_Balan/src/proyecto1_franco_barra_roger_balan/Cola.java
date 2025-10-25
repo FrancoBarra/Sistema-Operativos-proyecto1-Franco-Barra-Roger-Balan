@@ -188,5 +188,44 @@ public String toString() {
     this.tail = null;
     this.size = 0;
 }
+    public boolean buscarPorNombre(String nombre) {
+    if (isEmpty()) {
+        return false;
+    }
+    Node current = this.head;
+    while (current != null) {
+        // Comparamos los nombres
+        if (current.getPcb().getName().equalsIgnoreCase(nombre)) {
+            return true;
+        }
+        current = current.getNext();
+    }
+    return false;
+}
+
+/**
+ * NUEVO: Obtiene el PCB en una posición específica (índice)
+ * sin sacarlo de la cola.
+ * @param index La posición (0 es el 'head')
+ * @return El PCB en esa posición, o null si el índice está fuera de rango.
+ */
+public PCB get(int index) {
+    // Validación de seguridad
+    if (index < 0 || index >= this.size) {
+        // (Puedes lanzar una excepción si prefieres, pero null es más simple)
+        return null; 
+    }
+
+    // Recorremos la lista desde el 'head'
+    Node current = this.head;
+    for (int i = 0; i < index; i++) {
+        current = current.getNext();
+    }
+
+    // Devolvemos el PCB de ese nodo
+    return current.getPcb();
+}
+
+
     
 }
