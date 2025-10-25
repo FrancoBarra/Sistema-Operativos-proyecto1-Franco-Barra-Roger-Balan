@@ -36,7 +36,9 @@ public class GUI extends javax.swing.JFrame {
     
     public GUI() {
     initComponents();
-
+    txtPaneCPU.setContentType("text/html");
+    txtPaneCPU.setBackground(new java.awt.Color(240, 240, 240));
+    txtPaneCPU.setText("<html><body style='font-family: Segoe UI; font-size: 10pt; color: #888888;'><i>Inactivo</i></body></html>");
     // --- 1. Configuración de JTextPane ---
     txtAreaReady.setContentType("text/html");
     txtAreaBlocked.setContentType("text/html");
@@ -121,11 +123,35 @@ public class GUI extends javax.swing.JFrame {
         lblRelojGlobal.setText(String.valueOf(so.getGlobalClock()));
 
         // 2. CPU
-        PCB pcbEnCPU = so.getCpu().getCurrentProcess();
+       PCB pcbEnCPU = so.getCpu().getCurrentProcess();
+
         if (pcbEnCPU != null) {
-            lblCPU.setText(pcbEnCPU.getName() + " (ID: " + pcbEnCPU.getId() + ")");
+            // (Asegúrate de importar java.lang.StringBuilder si da error)
+            StringBuilder sb = new StringBuilder();
+            
+            // Estilos (puedes ajustar el 'font-size' si quieres)
+            sb.append("<html><body style='font-family: Segoe UI; font-size: 10pt;'>");
+
+            // Línea 1: Nombre e ID
+            sb.append("<b>").append(pcbEnCPU.getName()).append("</b>");
+            sb.append(" (ID: ").append(pcbEnCPU.getId()).append(")<br>"); // <br> es un salto de línea
+
+            // Línea 2: Registros PC y MAR
+            sb.append("PC: <b>").append(pcbEnCPU.getProgramCounter()).append("</b>");
+            sb.append(" / MAR: <b>").append(pcbEnCPU.getMemoryAddressRegister()).append("</b><br>");
+
+            // Línea 3: Ciclos restantes
+            sb.append("Ciclos Restantes: <b>").append(pcbEnCPU.getCiclosRestantes()).append("</b>");
+
+            // Cierre del HTML
+            sb.append("</body></html>");
+            
+            // Enviamos el HTML al JTextPane
+            txtPaneCPU.setText(sb.toString());
+
         } else {
-            lblCPU.setText("Inactivo");
+            // Si no hay proceso, mostramos "Inactivo" (con el mismo estilo)
+            txtPaneCPU.setText("<html><body style='font-family: Segoe UI; font-size: 10pt; color: #888888;'><i>Inactivo</i></body></html>");
         }
 
         // 3. Colas (¡Gracias a tu método .toString() en la clase Cola!)
@@ -192,8 +218,6 @@ public class GUI extends javax.swing.JFrame {
         jPanel3 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
         lblRelojGlobal = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
-        lblCPU = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
         jLabel11 = new javax.swing.JLabel();
@@ -203,6 +227,9 @@ public class GUI extends javax.swing.JFrame {
         txtAreaReady = new javax.swing.JTextPane();
         jScrollPane2 = new javax.swing.JScrollPane();
         txtAreaTerminados = new javax.swing.JTextPane();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        txtPaneCPU = new javax.swing.JTextPane();
+        jLabel7 = new javax.swing.JLabel();
         jPanel4 = new javax.swing.JPanel();
         jLabel12 = new javax.swing.JLabel();
         lblThroughput = new javax.swing.JLabel();
@@ -353,10 +380,6 @@ public class GUI extends javax.swing.JFrame {
 
         lblRelojGlobal.setText("0");
 
-        jLabel6.setText("CPU");
-
-        lblCPU.setText("Inactivo");
-
         jLabel9.setText("Cola Bloqueados");
 
         jLabel10.setText("Cola Terminados");
@@ -372,68 +395,66 @@ public class GUI extends javax.swing.JFrame {
         txtAreaTerminados.setBackground(new java.awt.Color(204, 204, 204));
         jScrollPane2.setViewportView(txtAreaTerminados);
 
+        jScrollPane4.setViewportView(txtPaneCPU);
+
+        jLabel7.setText("CPU");
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGap(86, 86, 86)
-                .addComponent(jLabel4)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 336, Short.MAX_VALUE)
-                .addComponent(lblRelojGlobal, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(94, 94, 94))
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGap(101, 101, 101)
-                .addComponent(jLabel6)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(lblCPU)
-                .addGap(158, 158, 158))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jScrollPane1)
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.Alignment.LEADING))
-                .addContainerGap())
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane2)
-                .addContainerGap())
-            .addGroup(jPanel3Layout.createSequentialGroup()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jScrollPane3)
+                    .addComponent(jScrollPane4, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGap(196, 196, 196)
-                        .addComponent(jLabel10))
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGap(201, 201, 201)
-                        .addComponent(jLabel9))
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGap(212, 212, 212)
-                        .addComponent(jLabel11)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addGap(210, 210, 210)
+                                .addComponent(jLabel4)
+                                .addGap(33, 33, 33)
+                                .addComponent(lblRelojGlobal, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addGap(195, 195, 195)
+                                .addComponent(jLabel10))
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addGap(203, 203, 203)
+                                .addComponent(jLabel9))
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addGap(210, 210, 210)
+                                .addComponent(jLabel11))
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(jLabel7)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addContainerGap(32, Short.MAX_VALUE)
+                .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblRelojGlobal)
-                    .addComponent(jLabel4))
-                .addGap(18, 18, 18)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel6)
-                    .addComponent(lblCPU))
-                .addGap(18, 18, 18)
+                    .addComponent(jLabel4)
+                    .addComponent(lblRelojGlobal))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 19, Short.MAX_VALUE)
+                .addComponent(jLabel7)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel11)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(12, 12, 12)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel9)
                 .addGap(18, 18, 18)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(12, 12, 12)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
                 .addComponent(jLabel10)
-                .addGap(27, 27, 27)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(43, 43, 43))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(40, 40, 40))
         );
 
         jPanel4.setBackground(new java.awt.Color(99, 128, 169));
@@ -654,7 +675,7 @@ public class GUI extends javax.swing.JFrame {
                     .addComponent(spinnerCiclosExcep, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(spinnerCiclosIO, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnAnadirProceso))
-                .addContainerGap(74, Short.MAX_VALUE))
+                .addContainerGap(68, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -875,7 +896,6 @@ public class GUI extends javax.swing.JFrame {
 
     // --- 3. Limpiar colas (visuales Y lógicas) ---
     lblRelojGlobal.setText("0");
-    lblCPU.setText("Inactivo");
     txtAreaReady.setText("");
     txtAreaBlocked.setText("");
     txtAreaTerminados.setText("");
@@ -1062,7 +1082,7 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
@@ -1072,7 +1092,7 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
-    private javax.swing.JLabel lblCPU;
+    private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JLabel lblEspera;
     private javax.swing.JLabel lblRelojGlobal;
     private javax.swing.JLabel lblRespuesta;
@@ -1090,6 +1110,7 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JTextPane txtAreaReady;
     private javax.swing.JTextPane txtAreaTerminados;
     private javax.swing.JTextField txtNombreProceso;
+    private javax.swing.JTextPane txtPaneCPU;
     private javax.swing.JTextField txtRutaCSV;
     // End of variables declaration//GEN-END:variables
 }

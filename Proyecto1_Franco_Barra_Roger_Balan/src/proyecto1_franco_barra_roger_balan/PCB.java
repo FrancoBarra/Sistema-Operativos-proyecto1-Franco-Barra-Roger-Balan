@@ -162,6 +162,7 @@ public class PCB {
     public ProcessStatus getStatus() { return status; }
     public long getArrivalTime() { return arrivalTime; }
     public int getProgramCounter() { return programCounter; }
+    
     public int getLongitudPrograma() { return longitudPrograma; }
     public int getCiclosRestantes() { return ciclosRestantes; }
     public ProcessType getType() { return type; }
@@ -169,6 +170,9 @@ public class PCB {
     public int getCiclosParaExcepcion() { return ciclosParaExcepcion; }
     public int getCiclosIOEspera() { return ciclosIOEspera; }
     public int getCiclosParaSatisfacerIO() { return ciclosParaSatisfacerIO; }
+    public int getMemoryAddressRegister() {
+    return this.memoryAddressRegister;
+}
     
     // Getters de Métricas
     public long getTiempoFinalizacion() { return tiempoFinalizacion; }
