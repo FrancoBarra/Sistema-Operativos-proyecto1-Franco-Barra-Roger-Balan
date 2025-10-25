@@ -69,6 +69,7 @@ public class SistemaOperativo implements Runnable {
         this.globalClock = 0;
         this.cycleDuration = 100;
         this.isRunning = false;
+        
     }
     
     /**

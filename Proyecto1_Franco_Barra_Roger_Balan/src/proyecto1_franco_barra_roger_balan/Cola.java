@@ -183,4 +183,10 @@ public String toString() {
         this.tail = tail;
     }
     
+    public void limpiarCola() {
+    this.head = null;
+    this.tail = null;
+    this.size = 0;
+}
+    
 }

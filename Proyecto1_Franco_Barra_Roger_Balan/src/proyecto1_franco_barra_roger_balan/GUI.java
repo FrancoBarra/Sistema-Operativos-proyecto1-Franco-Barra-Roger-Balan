@@ -37,7 +37,8 @@ public class GUI extends javax.swing.JFrame {
     public GUI() {
         initComponents();
 
-    
+    cmbTipoProceso.addItem(ProcessType.CPU_BOUND);
+    cmbTipoProceso.addItem(ProcessType.IO_BOUND);
     // --- 1. Configuración de JTextPane ---
     txtAreaReady.setContentType("text/html");
     txtAreaBlocked.setContentType("text/html");
@@ -95,8 +96,31 @@ public class GUI extends javax.swing.JFrame {
     btnIniciar.setEnabled(false); 
     btnPausar.setEnabled(false);
     btnDetener.setEnabled(false);
+    btnAnadirProceso.setEnabled(false);
         
-        
+    cmbTipoProceso.addItemListener(new java.awt.event.ItemListener() {
+    public void itemStateChanged(java.awt.event.ItemEvent evt) {
+        if (evt.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
+            // Comprobamos qué se seleccionó
+            boolean esIOBound = (evt.getItem() == ProcessType.IO_BOUND);
+
+            // Habilitamos/deshabilitamos los spinners de E/S
+            spinnerCiclosExcep.setEnabled(esIOBound);
+            spinnerCiclosIO.setEnabled(esIOBound);
+
+            // Si no es IO_BOUND, los reseteamos a 0
+            if (!esIOBound) {
+                spinnerCiclosExcep.setValue(0);
+                spinnerCiclosIO.setValue(0);
+            }
+        }
+    }
+});
+
+    // Estado inicial (por si CPU_BOUND es el primero)
+    spinnerCiclosExcep.setEnabled(false);
+    spinnerCiclosIO.setEnabled(false);
+
     }
     
     private void actualizarVistasGUI() {
@@ -560,15 +584,30 @@ public class GUI extends javax.swing.JFrame {
 
         Instrucciones.setText("jLabel5");
 
+        spinnerInstrucciones.setModel(new javax.swing.SpinnerNumberModel(50, 1, null, 1));
+
         tipo.setText("Tipo");
 
-        cmbTipoProceso.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbTipoProceso.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbTipoProcesoActionPerformed(evt);
+            }
+        });
 
         CiclospExcepcion.setText("Ciclos p/ Excepción:");
 
+        spinnerCiclosExcep.setModel(new javax.swing.SpinnerNumberModel(0, 0, null, 1));
+
         jLabel5.setText("Ciclos p/ Satisfacer E/S");
 
+        spinnerCiclosIO.setModel(new javax.swing.SpinnerNumberModel(0, 0, null, 1));
+
         btnAnadirProceso.setText("Añadir Proceso");
+        btnAnadirProceso.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAnadirProcesoActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
@@ -578,8 +617,9 @@ public class GUI extends javax.swing.JFrame {
                 .addGap(19, 19, 19)
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel5Layout.createSequentialGroup()
+                        .addGap(17, 17, 17)
                         .addComponent(nombre)
-                        .addGap(139, 139, 139)
+                        .addGap(122, 122, 122)
                         .addComponent(Instrucciones)
                         .addGap(67, 67, 67)
                         .addComponent(tipo))
@@ -601,7 +641,7 @@ public class GUI extends javax.swing.JFrame {
                         .addComponent(spinnerCiclosExcep, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(96, 96, 96)
                         .addComponent(spinnerCiclosIO, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 110, Short.MAX_VALUE)
                         .addComponent(btnAnadirProceso)
                         .addGap(127, 127, 127))))
         );
@@ -711,7 +751,7 @@ public class GUI extends javax.swing.JFrame {
 
 
         // --- 5. Cargar los procesos iniciales del CSV ---
-        so.loadInitialProcesses(); 
+        so.loadInitialProcesses();
 
         // --- 6. Configurar y arrancar el Timer (El nuevo "Loop") ---
         so.setCycleDuration(cicloMs); // (Tu S.O. usa esto para el sleep de IOThread)
@@ -873,6 +913,61 @@ public class GUI extends javax.swing.JFrame {
     }
     }//GEN-LAST:event_btnGuardarConfigActionPerformed
 
+    private void cmbTipoProcesoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTipoProcesoActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cmbTipoProcesoActionPerformed
+
+    private void btnAnadirProcesoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAnadirProcesoActionPerformed
+        // TODO add your handling code here:
+        if (so == null || !simulationTimer.isRunning()) {
+        javax.swing.JOptionPane.showMessageDialog(this, 
+                "Solo puedes añadir procesos mientras la simulación está en curso.", 
+                "Aviso", 
+                javax.swing.JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+
+    try {
+        // 2. Obtener todos los valores del formulario
+        String nombre = txtNombreProceso.getText();
+        int instrucciones = (Integer) spinnerInstrucciones.getValue();
+        ProcessType tipo = (ProcessType) cmbTipoProceso.getSelectedItem();
+        int ciclosExcep = (Integer) spinnerCiclosExcep.getValue();
+        int ciclosIO = (Integer) spinnerCiclosIO.getValue();
+
+        // Validaciones
+        if (nombre.trim().isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "El nombre no puede estar vacío.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        if (tipo == ProcessType.IO_BOUND && (ciclosExcep <= 0 || ciclosIO <= 0)) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Procesos I/O_BOUND deben tener ciclos > 0.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // 3. Crear el nuevo PCB
+        // (Asegúrate de importar proyecto1_franco_barra_roger_balan.PCB)
+        // (Usamos el reloj global como tiempo de llegada)
+        PCB newPcb = new PCB(nombre, instrucciones, tipo, ciclosExcep, ciclosIO, so.getGlobalClock());
+
+        // 4. Ponerlo en estado READY
+        // (Asegúrate de importar proyecto1_franco_barra_roger_balan.ProcessStatus)
+        newPcb.setStatus(ProcessStatus.READY);
+
+        // 5. ¡Añadirlo a la cola de listos!
+        // El Scheduler (que ya tienes) se encargará de ponerlo
+        // en el lugar correcto según el algoritmo (SJF, Prioridad, etc.)
+        so.getScheduler().reinsertProcess(newPcb);
+
+        // 6. Limpiar el formulario
+        txtNombreProceso.setText("");
+        spinnerInstrucciones.setValue(50);
+
+    } catch (Exception e) {
+        javax.swing.JOptionPane.showMessageDialog(this, "Error creando proceso: " + e.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+    }
+    }//GEN-LAST:event_btnAnadirProcesoActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -919,7 +1014,7 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JButton btnIniciar;
     private javax.swing.JButton btnPausar;
     private javax.swing.JComboBox<String> cmbAlgoritmo;
-    private javax.swing.JComboBox<String> cmbTipoProceso;
+    private javax.swing.JComboBox<ProcessType> cmbTipoProceso;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
