@@ -8,15 +8,15 @@ package proyecto1_franco_barra_roger_balan;
  *
  * @author frank
  */
-// Archivo: ProcessStatus.java (Recomendado crear como un archivo separado)
+
 public enum ProcessStatus {
-    NEW,        // Nuevo
-    READY,      // Listo
-    RUNNING,    // Ejecución
-    BLOCKED,    // Bloqueado
-    TERMINATED, // Terminado
-    SUSPENDED_READY, // Listo Suspendido
-    SUSPENDED_BLOCKED // Bloqueado Suspendido
+    NEW,       
+    READY,      
+    RUNNING,   
+    BLOCKED,   
+    TERMINATED, 
+    SUSPENDED_READY, 
+    SUSPENDED_BLOCKED 
 }
 
-// Archivo: ProcessType.java (Recomendado crear como un archivo separado)
+

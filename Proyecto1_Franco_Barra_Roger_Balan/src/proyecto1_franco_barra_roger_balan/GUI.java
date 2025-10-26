@@ -5,7 +5,6 @@
 package proyecto1_franco_barra_roger_balan;
 import java.awt.Dimension;
 /**
- *
  * @author frank
  */
 import javax.swing.JFileChooser;
@@ -18,18 +17,10 @@ import org.jfree.data.general.DefaultPieDataset;
 import java.awt.BorderLayout;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.chart.plot.PlotOrientation;
-// (Los JTextPane, JLabel, etc. no se importan aquí)
-
-// --- Imports de AWT (para la nueva línea 'Dimension') ---
-
-
-// --- Imports de IO (para cargar el archivo) ---
-import java.io.File; // <-- ¡NUEVO!
-import java.io.BufferedReader; // <-- ¡NUEVO!
-import java.io.FileReader; // <-- ¡NUEVO!
-import java.io.FileNotFoundException; // <-- ¡NUEVO!
-
-// (Probablemente también necesites estos para los botones)
+import java.io.File; 
+import java.io.BufferedReader; 
+import java.io.FileReader;
+import java.io.FileNotFoundException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileWriter;
@@ -41,18 +32,17 @@ public class GUI extends javax.swing.JFrame {
     private String rutaArchivoCSV;
     private Cola procesosEnStaging;
     
-    // --- NUEVAS VARIABLES PARA EL GRÁFICO ---
- // --- VARIABLES PARA LOS GRÁFICOS ---
+
 private DefaultPieDataset pieDataset;
 private JFreeChart pieChart;
-private ChartPanel pieChartPanel; // <-- CAMBIÉ EL NOMBRE (antes 'chartPanel')
+private ChartPanel pieChartPanel; 
 
- // --- ¡NUEVAS VARIABLES! (Para Gráfico de Barras 1: Tiempos) ---
+
 private DefaultCategoryDataset timeDataset;
 private JFreeChart timeBarChart;
 private ChartPanel timeChartPanel;
 
-// --- ¡NUEVAS VARIABLES! (Para Gráfico de Barras 2: Colas) ---
+
 private DefaultCategoryDataset queueDataset;
 private JFreeChart queueBarChart;
 private ChartPanel queueChartPanel;
@@ -61,17 +51,10 @@ private ChartPanel queueChartPanel;
     
     public GUI() {
     initComponents();
-    // PEGA ESTE CÓDIGO NUEVO EN LA LÍNEA 64
 
-// --- INICIALIZAR LOS 3 GRÁFICOS ---
-        
-// 1. Establecer el Layout de 3 columnas en el panel principal
-// (1 fila, 3 columnas, con 5px de espacio entre ellas)
 jPanelGraficos.setLayout(new java.awt.GridLayout(1, 3, 5, 5));
 
-// ======================================================
-// GRÁFICO 1: UTILIZACIÓN CPU (El que ya tenías)
-// ======================================================
+
 this.pieDataset = new DefaultPieDataset();
 this.pieDataset.setValue("CPU Ocioso", 100.0);
 this.pieDataset.setValue("CPU en Uso", 0.0);
@@ -79,23 +62,21 @@ this.pieDataset.setValue("CPU en Uso", 0.0);
 this.pieChart = ChartFactory.createPieChart(
     "Utilización de CPU", pieDataset, true, true, false
 );
-// IMPORTANTE: Usa la variable renombrada
+
 this.pieChartPanel = new ChartPanel(pieChart); 
-// Añadimos el primer gráfico
+
 jPanelGraficos.add(this.pieChartPanel);
 
-// ======================================================
-// GRÁFICO 2: TIEMPOS PROMEDIO (Barras)
-// ======================================================
+
 this.timeDataset = new DefaultCategoryDataset();
 this.timeDataset.setValue(0, "Ciclos", "Espera");
 this.timeDataset.setValue(0, "Ciclos", "Retorno");
 this.timeDataset.setValue(0, "Ciclos", "Respuesta");
 
 this.timeBarChart = ChartFactory.createBarChart(
-    "Tiempos Promedio",  // Título
-    "Métrica",           // Eje X
-    "Ciclos",            // Eje Y
+    "Tiempos Promedio",  
+    "Métrica",          
+    "Ciclos",            
     this.timeDataset,
     PlotOrientation.VERTICAL,
     false, true, false
@@ -104,37 +85,32 @@ this.timeChartPanel = new ChartPanel(this.timeBarChart);
 // Añadimos el segundo gráfico
 jPanelGraficos.add(this.timeChartPanel);
 
-// ======================================================
-// GRÁFICO 3: TAMAÑO DE COLAS (Barras)
-// ======================================================
+
 this.queueDataset = new DefaultCategoryDataset();
 this.queueDataset.setValue(0, "Procesos", "Listos");
 this.queueDataset.setValue(0, "Procesos", "Bloqueados");
 this.queueDataset.setValue(0, "Procesos", "Terminados");
 
 this.queueBarChart = ChartFactory.createBarChart(
-    "Procesos en Cola", // Título
-    "Colas",            // Eje X
-    "Cantidad",         // Eje Y
+    "Procesos en Cola", 
+    "Colas",          
+    "Cantidad",     
     this.queueDataset,
     PlotOrientation.VERTICAL,
     false, true, false
 );
 this.queueChartPanel = new ChartPanel(this.queueBarChart);
-// Añadimos el tercer gráfico
+
 jPanelGraficos.add(this.queueChartPanel);
 
-// ------------------------------------------------------
-// Validamos el panel al final
-jPanelGraficos.validate(); 
-// --- FIN DE LA INICIALIZACIÓN DE GRÁFICOS ---
 
-// (Aquí debe continuar tu código de la línea 85: txtPaneCPU.setContentType("text/html");)
+jPanelGraficos.validate(); 
+
     txtPaneCPU.setContentType("text/html");
     txtPaneCPU.setContentType("text/html");
     txtPaneCPU.setBackground(new java.awt.Color(240, 240, 240));
     txtPaneCPU.setText("<html><body style='font-family: Segoe UI; font-size: 10pt; color: #888888;'><i>Inactivo</i></body></html>");
-    // --- 1. Configuración de JTextPane ---
+   
     txtAreaReady.setContentType("text/html");
     
     txtAreaBlocked.setContentType("text/html");
@@ -145,61 +121,55 @@ jPanelGraficos.validate();
         cmbAlgoritmo.addItem(algo.toString()); 
     }
 
-    // (Asegúrate de tener <ProcessType> en el JComboBox 'cmbTipoProceso')
+
     cmbTipoProceso.addItem(ProcessType.CPU_BOUND);
     cmbTipoProceso.addItem(ProcessType.IO_BOUND);
 
-    // --- 3. ¡NUEVO! Inicializar la "Sala de Espera" ---
+
     this.procesosEnStaging = new Cola();
 
-    // --- 4. Spinners (Valores por defecto Y tu código de tamaño) ---
+   
     spinnerCicloMs.setValue(100);
-    // ... (tus líneas de 'ancho' y 'alto' y 'setPreferredSize') ...
+    
     spinnerQuantum.setValue(5);
 
-    // --- 5. Código de Carga (¡Se queda!) ---
-    // (Este try-catch carga el sim_config.csv, lo veremos en el Paso 7)
+  
     try {
-        // ... (el código de 'try-catch' para cargar 'sim_config.csv' va aquí) ...
-        // ¡Lo programaremos en el Paso 7!
+      
     } catch (Exception e) {
-        // ...
+        
     }
 
-    // --- 6. Configuración inicial de botones (¡LA NUEVA LÓGICA!) ---
-    btnIniciar.setEnabled(false); // Deshabilitado hasta que haya procesos
+
+    btnIniciar.setEnabled(false); 
     btnPausar.setEnabled(false);
     btnDetener.setEnabled(false);
-    btnAnadirProceso.setEnabled(true); // ¡SIEMPRE HABILITADO!
-    // (Asumimos que btnCargarCSV y btnGuardarConfig están siempre habilitados)
+    btnAnadirProceso.setEnabled(true); 
 
-    // --- 7. Listener del ComboBox (Tu código) ---
-    // (El listener de 'cmbTipoProceso.addItemListener' va aquí)
-    // ...
+  
 
-    // --- 8. Estado inicial de spinners (Tu código) ---
+  
     spinnerCiclosExcep.setEnabled(false);
     spinnerCiclosIO.setEnabled(false);
     
     cmbTipoProceso.addItemListener(new java.awt.event.ItemListener() {
     public void itemStateChanged(java.awt.event.ItemEvent evt) {
 
-        // Solo nos importa cuando algo es SELECCIONADO
+       
         if (evt.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
 
-            // --- ¡El Arreglo que ya habíamos discutido! ---
-            // 1. Obtenemos el item seleccionado Y LO CONVERTIMOS A STRING
+         
             String itemSeleccionado = evt.getItem().toString();
 
-            // 2. Comparamos STRING contra STRING
+      
             boolean esIOBound = itemSeleccionado.equals(ProcessType.IO_BOUND.toString());
-            // --- Fin del Arreglo ---
+          
 
-            // Habilitamos/deshabilitamos los spinners de E/S
+           
             spinnerCiclosExcep.setEnabled(esIOBound);
             spinnerCiclosIO.setEnabled(esIOBound);
 
-            // Si no es IO_BOUND, los reseteamos a 0
+           
             if (!esIOBound) {
                 spinnerCiclosExcep.setValue(0);
                 spinnerCiclosIO.setValue(0);
@@ -212,60 +182,57 @@ jPanelGraficos.validate();
     private void actualizarVistasGUI() {
         if (so == null) return;
 
-        // 1. Reloj
+  
         lblRelojGlobal.setText(String.valueOf(so.getGlobalClock()));
 
-        // 2. CPU
+     
        PCB pcbEnCPU = so.getCpu().getCurrentProcess();
 
         if (pcbEnCPU != null) {
             
             lblRelojGlobal1.setText("Modo: Usuario");
-            // (Asegúrate de importar java.lang.StringBuilder si da error)
+           
             StringBuilder sb = new StringBuilder();
             
-            // Estilos (puedes ajustar el 'font-size' si quieres)
+          
             sb.append("<html><body style='font-family: Segoe UI; font-size: 10pt;'>");
 
-            // Línea 1: Nombre e ID
+           
             sb.append("<b>").append(pcbEnCPU.getName()).append("</b>");
-            sb.append(" (ID: ").append(pcbEnCPU.getId()).append(")<br>"); // <br> es un salto de línea
+            sb.append(" (ID: ").append(pcbEnCPU.getId()).append(")<br>"); 
 
-            // Línea 2: Registros PC y MAR
+           
             sb.append("PC: <b>").append(pcbEnCPU.getProgramCounter()).append("</b>");
             sb.append(" / MAR: <b>").append(pcbEnCPU.getMemoryAddressRegister()).append("</b><br>");
 
-            // Línea 3: Ciclos restantes
+      
             sb.append("Ciclos Restantes: <b>").append(pcbEnCPU.getCiclosRestantes()).append("</b>");
 
-            // Cierre del HTML
+         
             sb.append("</body></html>");
             
-            // Enviamos el HTML al JTextPane
+          
             txtPaneCPU.setText(sb.toString());
 
         } else {
             
             lblRelojGlobal1.setText("Modo: Kernel");
-            // Si no hay proceso, mostramos "Inactivo" (con el mismo estilo)
+           
             txtPaneCPU.setText("<html><body style='font-family: Segoe UI; font-size: 10pt; color: #888888;'><i>Inactivo</i></body></html>");
         }
 
-        // 3. Colas (¡Gracias a tu método .toString() en la clase Cola!)
+        
         txtAreaReady.setText(so.getReadyQueue().toString());
         txtAreaBlocked.setText(so.getBlockedQueue().toString());
         txtAreaTerminados.setText(so.getTerminatedQueue().toString());
         actualizarGraficoCPU();
         
         actualizarMetricasGUI();
-        // (Opcional: actualiza el contador de terminados si lo dejaste)
-        // lblTerminados.setText(String.valueOf(so.getTerminatedQueue().getSize()));
+       
         actualizarGraficosBarras();
     }
 
-    /**
-     * Se llama cuando la simulación termina.
-     */
+
  
     private void actualizarMetricasGUI() {
     if (so == null || so.getGestorMetricas() == null) {
@@ -289,19 +256,14 @@ jPanelGraficos.validate();
         
         
         
-        // ¡BORRA ESTA LÍNEA!
-        // metricas.calcularMetricasFinales(); // <-- Esta línea se va.
-
-        // (Importa java.text.DecimalFormat si quieres formatearlo bonito)
-        // O usamos String.format que es más fácil:
-        
+ 
         lblThroughput.setText(String.format("%.4f", metricas.calcularThroughput()));
         lblUtilizacionCPU.setText(String.format("%.2f %%", metricas.calcularUtilizacionCPU() * 100));
         lblTurnaround.setText(String.format("%.2f", metricas.calcularTiempoDeRetornoPromedio()));
         lblEspera.setText(String.format("%.2f", metricas.calcularTiempoDeEsperaPromedio()));
         lblRespuesta.setText(String.format("%.2f", metricas.calcularTiempoDeRespuestaPromedio()));
 
-        // Habilitar botones para una nueva simulación
+    
         btnIniciar.setEnabled(true);
         btnCargarCSV.setEnabled(true);
         btnPausar.setEnabled(false);
@@ -310,56 +272,46 @@ jPanelGraficos.validate();
         javax.swing.JOptionPane.showMessageDialog(this, "¡Simulación Finalizada!");
     }
 
-    /**
-     * Actualiza los datos del gráfico de torta.
-     * Este método debe ser llamado en cada "tick" de la simulación.
-     */
+
     private void actualizarGraficoCPU() {
-        // Asegurarnos de que el gestor de métricas exista
+   
         if (so == null || so.getGestorMetricas() == null) {
             return;
         }
         
         
 
-        // 1. Obtener la métrica de utilización de tu clase GestorDeMetricas
-        // (Ajusta el nombre del método si es necesario!)
+  
         double utilizacion = so.getGestorMetricas().calcularUtilizacionCPU(); 
 
-        // 2. Calcular los porcentajes
+     
         double porcentajeUso = utilizacion * 100.0;
         double porcentajeOcioso = (1.0 - utilizacion) * 100.0;
 
-        // 3. Actualizar el dataset. 
+ 
         this.pieDataset.setValue("CPU en Uso", porcentajeUso);
         this.pieDataset.setValue("CPU Ocioso", porcentajeOcioso);
     }
     
-    // --- PEGA ESTE MÉTODO NUEVO EN LA LÍNEA 272 ---
-
+  
 private void actualizarGraficosBarras() {
     if (so == null || so.getGestorMetricas() == null) {
         return;
     }
     
-    // 1. Actualizar Gráfico de Tiempos (usa el GestorDeMetricas)
+    
     GestorDeMetricas metricas = so.getGestorMetricas();
     this.timeDataset.setValue(metricas.calcularTiempoDeEsperaPromedio(), "Ciclos", "Espera");
     this.timeDataset.setValue(metricas.calcularTiempoDeRetornoPromedio(), "Ciclos", "Retorno");
     this.timeDataset.setValue(metricas.calcularTiempoDeRespuestaPromedio(), "Ciclos", "Respuesta");
 
-    // 2. Actualizar Gráfico de Colas (usa el SistemaOperativo)
-    // (Asegúrate de que tu clase 'Cola' tenga un método 'getSize()')
+  
     this.queueDataset.setValue(so.getReadyQueue().getSize(), "Procesos", "Listos");
     this.queueDataset.setValue(so.getBlockedQueue().getSize(), "Procesos", "Bloqueados");
     this.queueDataset.setValue(so.getTerminatedQueue().getSize(), "Procesos", "Terminados");
 }
 
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
+ 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -910,43 +862,40 @@ private void actualizarGraficosBarras() {
 
     private void btnIniciarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnIniciarActionPerformed
         try {
-        // --- 1. LEER LA CONFIGURACIÓN DE LA GUI ---
+      
         String algoSeleccionado = (String) cmbAlgoritmo.getSelectedItem();
         Scheduler.SchedulingAlgorithm algoritmo = Scheduler.SchedulingAlgorithm.valueOf(algoSeleccionado);
         int quantum = (Integer) spinnerQuantum.getValue();
         int cicloMs = (Integer) spinnerCicloMs.getValue();
 
-        // --- 2. ¡AQUÍ ESTÁ EL CÓDIGO FALTANTE! ---
-        // (Crear todos los componentes que el S.O. necesita)
-        // (Asegúrate de importar CPU, Scheduler, GestorEstados, etc.)
+       
         Cola readyQueue = new Cola();
         Cola blockedQueue = new Cola();
-        Cola suspendedReadyQueue = new Cola(); // Necesaria para GestorEstados
+        Cola suspendedReadyQueue = new Cola(); 
         
         Scheduler scheduler = new Scheduler(readyQueue, algoritmo, quantum);
         GestorEstados gestorEstados = new GestorEstados(readyQueue, blockedQueue, suspendedReadyQueue, scheduler);
-        CPU cpu = new CPU(quantum); // La CPU también necesita el quantum
+        CPU cpu = new CPU(quantum); // 
         // ------------------------------------------
 
-        // --- 3. ¡Usar el ÚNICO constructor del S.O.! ---
-        // (Ahora 'cpu', 'scheduler', etc., SÍ existen)
+     
         this.so = new SistemaOperativo(cpu, scheduler, gestorEstados, readyQueue, blockedQueue);
         
-        // --- 4. Cargar los procesos desde nuestra cola de Staging ---
-        txtAreaReady.setText(""); // Limpiamos la lista visual
+       
+        txtAreaReady.setText(""); 
         for (int i = 0; i < procesosEnStaging.getSize(); i++) {
             
-            // 1. Obtenemos el original (sin sacarlo)
+           
             PCB pcbOriginal = procesosEnStaging.get(i);
             
-            // 2. Creamos un CLON "fresco" (del Paso 1 de mi respuesta anterior)
+         
             PCB pcbClonado = new PCB(pcbOriginal); 
             
             pcbClonado.setStatus(ProcessStatus.READY);
-            so.getScheduler().reinsertProcess(pcbClonado); // Añadimos el clon
+            so.getScheduler().reinsertProcess(pcbClonado); 
         }
 
-        // --- 5. Configurar y arrancar el Timer ---
+       
         so.setCycleDuration(cicloMs); 
         this.simulationTimer = new javax.swing.Timer(cicloMs, new java.awt.event.ActionListener() {
             @Override
@@ -962,13 +911,13 @@ private void actualizarGraficosBarras() {
         });
         simulationTimer.start();
         
-        // --- 6. Actualizar botones ---
+      
         btnIniciar.setEnabled(false);
-        btnAnadirProceso.setEnabled(true); // Sigue activo
+        btnAnadirProceso.setEnabled(true); 
         btnPausar.setEnabled(true);
         btnDetener.setEnabled(true);
-        btnCargarCSV.setEnabled(false); // Deshabilitamos cargar/guardar
-        btnGuardarConfig.setEnabled(false); // mientras corre
+        btnCargarCSV.setEnabled(false);
+        btnGuardarConfig.setEnabled(false); 
         
     } catch (Exception ex) {
         JOptionPane.showMessageDialog(this, "Error al iniciar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
@@ -977,30 +926,30 @@ private void actualizarGraficosBarras() {
     }//GEN-LAST:event_btnIniciarActionPerformed
 
     private void btnPausarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPausarActionPerformed
-        // TODO add your handling code here:
+     
         if (this.simulationTimer == null) {
         return;
     }
 
-    // Comprobamos si el Timer (nuestro loop) está corriendo
+
     if (this.simulationTimer.isRunning()) {
-        // --- SI ESTÁ CORRIENDO: LO PAUSAMOS ---
+    
         this.simulationTimer.stop();
 
-        // Cambiamos el texto del botón
+      
         btnPausar.setText("Reanudar");
 
     } else {
-        // --- SI ESTÁ PAUSADO: LO REANUDAMOS ---
+ 
         this.simulationTimer.start();
 
-        // Devolvemos el texto original al botón
+     
         btnPausar.setText("Pausar");
     }
     }//GEN-LAST:event_btnPausarActionPerformed
 
     private void btnCargarCSVActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCargarCSVActionPerformed
-    // (Asegúrate de importar javax.swing.JFileChooser y java.io.File)
+  
     JFileChooser fileChooser = new JFileChooser();
     int returnValue = fileChooser.showOpenDialog(this);
 
@@ -1008,10 +957,10 @@ private void actualizarGraficosBarras() {
         File selectedFile = fileChooser.getSelectedFile();
         txtRutaCSV.setText(selectedFile.getAbsolutePath());
         
-        // (Importa java.io.BufferedReader, java.io.FileReader, java.io.FileNotFoundException)
+      
         try (BufferedReader reader = new BufferedReader(new FileReader(selectedFile))) {
             
-            // --- 1. LEER LA CONFIGURACIÓN (Línea 1) ---
+       
             String configLine = reader.readLine();
             if (configLine == null) {
                 throw new Exception("El archivo está vacío.");
@@ -1027,25 +976,24 @@ private void actualizarGraficosBarras() {
             spinnerCicloMs.setValue(Integer.parseInt(parts[1]));
             spinnerQuantum.setValue(Integer.parseInt(parts[2]));
             
-            // --- 2. LEER LOS PROCESOS (Líneas 2 en adelante) ---
-            procesosEnStaging.limpiarCola(); // Limpiamos la "sala de espera" actual
+         
+            procesosEnStaging.limpiarCola(); 
             String processLine;
             int procesosCargados = 0;
             
-            // (Importa proyecto1_franco_barra_roger_balan.PCB)
-            // (Importa proyecto1_franco_barra_roger_balan.ProcessType)
+         
             while ((processLine = reader.readLine()) != null) {
                 String[] pcbParts = processLine.split(",");
-                if (pcbParts.length < 5) continue; // Ignorar líneas mal formadas
+                if (pcbParts.length < 5) continue; 
                 
-                // Creamos el PCB (con arrivalTime 0 por defecto)
+               
                 PCB newPcb = new PCB(
-                        pcbParts[0],                                 // Nombre
-                        Integer.parseInt(pcbParts[1]),             // Instrucciones
-                        ProcessType.valueOf(pcbParts[2]),            // Tipo
-                        Integer.parseInt(pcbParts[3]),             // CiclosExcep
-                        Integer.parseInt(pcbParts[4]),             // CiclosIO
-                        0                                          // ArrivalTime
+                        pcbParts[0],                           
+                        Integer.parseInt(pcbParts[1]),            
+                        ProcessType.valueOf(pcbParts[2]),          
+                        Integer.parseInt(pcbParts[3]),           
+                        Integer.parseInt(pcbParts[4]),           
+                        0                                          
                 );
                 
                 newPcb.setStatus(ProcessStatus.NEW);
@@ -1053,11 +1001,11 @@ private void actualizarGraficosBarras() {
                 procesosCargados++;
             }
             
-            // --- 3. Actualizar GUI y botones ---
+          
             if (procesosCargados > 0) {
                 btnIniciar.setEnabled(true);
             }
-            txtAreaReady.setText(procesosEnStaging.toString()); // Mostramos en la "sala de espera"
+            txtAreaReady.setText(procesosEnStaging.toString()); 
             
             JOptionPane.showMessageDialog(this,
                     "¡Configuración cargada y " + procesosCargados + " procesos añadidos!",
@@ -1078,23 +1026,23 @@ private void actualizarGraficosBarras() {
     if (this.simulationTimer != null) this.simulationTimer.stop();
     if (this.so != null) this.so.stopSimulation();
 
-    // --- 3. Limpiar colas (visuales Y lógicas) ---
+  
     lblRelojGlobal.setText("0");
     txtAreaReady.setText("");
     txtAreaBlocked.setText("");
     txtAreaTerminados.setText("");
-    // ... (limpiar métricas) ...
+  
 
 
-    // --- 4. Resetear botones ---
-    btnIniciar.setEnabled(false); // No se puede iniciar sin procesos
+   
+    btnIniciar.setEnabled(false); 
     btnAnadirProceso.setEnabled(true);
     btnPausar.setEnabled(false);
     btnDetener.setEnabled(false);
-    btnCargarCSV.setEnabled(true); // Habilitamos cargar/guardar
+    btnCargarCSV.setEnabled(true); 
     btnGuardarConfig.setEnabled(true);
 
-    // --- 5. Destruir simulación ---
+   
     this.so = null;
     this.simulationTimer = null; 
 
@@ -1105,21 +1053,19 @@ private void actualizarGraficosBarras() {
      // (Asegúrate de importar java.io.FileWriter y java.io.IOException)
     try (java.io.FileWriter writer = new java.io.FileWriter("sim_config.csv")) {
         
-        // --- 1. GUARDAR LA CONFIGURACIÓN (Línea 1) ---
+      
         String algoritmo = (String) cmbAlgoritmo.getSelectedItem();
         int cicloMs = (Integer) spinnerCicloMs.getValue();
         int quantum = (Integer) spinnerQuantum.getValue();
         
-        // Escribimos la línea de configuración
+        
         writer.write(algoritmo + "," + cicloMs + "," + quantum + "\n");
 
-        // --- 2. GUARDAR LOS PROCESOS DE LA "SALA DE ESPERA" (Líneas 2 en adelante) ---
-        // (Usamos el 'for' loop que creamos, ¡sin java.util!)
+        
         for (int i = 0; i < procesosEnStaging.getSize(); i++) {
             PCB pcb = procesosEnStaging.get(i);
             
-            // Creamos una línea CSV para el PCB
-            // Formato: Nombre,Instrucciones,Tipo,CiclosExcep,CiclosIO
+          
             String pcbLine = String.format("%s,%d,%s,%d,%d\n",
                     pcb.getName(),
                     pcb.getLongitudPrograma(),
@@ -1127,10 +1073,10 @@ private void actualizarGraficosBarras() {
                     pcb.getCiclosParaExcepcion(),
                     pcb.getCiclosParaSatisfacerIO()
             );
-            writer.write(pcbLine); // Escribimos la línea del proceso
+            writer.write(pcbLine); 
         }
         
-        // --- 3. Mensaje de éxito ---
+      
         JOptionPane.showMessageDialog(this,
                 "¡Configuración y " + procesosEnStaging.getSize() + " procesos guardados!",
                 "Guardado",
@@ -1146,29 +1092,29 @@ private void actualizarGraficosBarras() {
     }//GEN-LAST:event_btnGuardarConfigActionPerformed
 
     private void cmbTipoProcesoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTipoProcesoActionPerformed
-        // TODO add your handling code here:
+       
     }//GEN-LAST:event_cmbTipoProcesoActionPerformed
 
     private void btnAnadirProcesoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAnadirProcesoActionPerformed
         try {
-        // 1. Obtener valores del formulario
+        
         String nombre = txtNombreProceso.getText();
         int instrucciones = (Integer) spinnerInstrucciones.getValue();
         ProcessType tipo = (ProcessType) cmbTipoProceso.getSelectedItem();
         int ciclosExcep = (Integer) spinnerCiclosExcep.getValue();
         int ciclosIO = (Integer) spinnerCiclosIO.getValue();
 
-        // --- 2. VALIDACIÓN DE NOMBRE (¡Tu requisito!) ---
+      
         if (nombre.trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "El nombre no puede estar vacío.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        // Validar en Staging
+        
         if (procesosEnStaging.buscarPorNombre(nombre)) {
             JOptionPane.showMessageDialog(this, "Error: Ya existe un proceso con ese nombre en la lista de espera.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        // Validar en S.O. (si ya está corriendo)
+        
         if (so != null && (so.getReadyQueue().buscarPorNombre(nombre) || 
                             so.getBlockedQueue().buscarPorNombre(nombre) ||
                             so.getTerminatedQueue().buscarPorNombre(nombre))) {
@@ -1176,31 +1122,29 @@ private void actualizarGraficosBarras() {
             return;
         }
 
-        // ... (Otras validaciones, como la de I/O) ...
-
-        // 3. Crear el PCB
+       
         long arrivalTime = (so != null) ? so.getGlobalClock() : 0;
         PCB newPcb = new PCB(nombre, instrucciones, tipo, ciclosExcep, ciclosIO, arrivalTime);
 
-        // --- 4. LÓGICA DE AÑADIR (MODIFICADA) ---
+     
         if (so == null || !simulationTimer.isRunning()) {
-            // A: Simulación NO ha empezado. Añadir a Staging.
+          
             newPcb.setStatus(ProcessStatus.NEW);
             procesosEnStaging.agregar(newPcb);
-            btnIniciar.setEnabled(true); // ¡HABILITAMOS "INICIAR"!
+            btnIniciar.setEnabled(true); 
 
-            // (Truco visual: usa la cola de terminados para ver la lista de Staging)
+           
             txtAreaReady.setText(procesosEnStaging.toString());
 
         } else {
-            // B: Simulación SÍ está corriendo. Añadir directo al Scheduler.
+           
             newPcb.setStatus(ProcessStatus.READY);
             so.getScheduler().reinsertProcess(newPcb);
         }
 
-        // 5. Limpiar el formulario
+       
         txtNombreProceso.setText("");
-        spinnerInstrucciones.setValue(50); // (o el default que quieras)
+        spinnerInstrucciones.setValue(50); 
 
     } catch (Exception e) {
         JOptionPane.showMessageDialog(this, "Error creando proceso: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
@@ -1208,14 +1152,12 @@ private void actualizarGraficosBarras() {
     }//GEN-LAST:event_btnAnadirProcesoActionPerformed
 
     private void txtNombreProcesoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtNombreProcesoActionPerformed
-        // TODO add your handling code here:
+        
     }//GEN-LAST:event_txtNombreProcesoActionPerformed
 
-    /**
-     * @param args the command line arguments
-     */
+    
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
+      
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
@@ -1239,7 +1181,7 @@ private void actualizarGraficosBarras() {
         //</editor-fold>
 
 
-        /* Create and display the form */
+    
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new GUI().setVisible(true);

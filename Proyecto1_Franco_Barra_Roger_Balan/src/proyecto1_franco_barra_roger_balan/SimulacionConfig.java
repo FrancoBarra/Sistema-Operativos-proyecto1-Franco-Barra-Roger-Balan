@@ -4,20 +4,11 @@
  */
 package proyecto1_franco_barra_roger_balan;
 
-/**
- *
- * @author frank
- */
-// Archivo: SimulacionConfig.java
 
-/**
- * Clase SimulacionConfig: Contenedor simple para los datos leídos del archivo.
- * Almacena la duración del ciclo y los procesos iniciales en un array de Java.
- */
 public class SimulacionConfig {
     
     private final long cycleDuration;
-    // Usamos array simple de Java (permitido)
+
     private final PCB[] initialProcesses; 
 
     public SimulacionConfig(long cycleDuration, PCB[] initialProcesses) {

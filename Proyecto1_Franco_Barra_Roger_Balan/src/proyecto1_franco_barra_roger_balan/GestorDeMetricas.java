@@ -10,12 +10,10 @@ package proyecto1_franco_barra_roger_balan;
  */
 public class GestorDeMetricas {
     
-    // Almacenamiento de los PCBs terminados (sin usar java.util.List)
     private static final int MAX_PROCESOS = 100;
     private final PCB[] pcbsTerminados;
     private int contadorTerminados;
     
-    // Métricas de la Simulación Global
     private long ciclosTotales = 0;
     private long ciclosCPUInactiva = 0;
     private long ciclosKernelCPU = 0;
@@ -25,22 +23,12 @@ public class GestorDeMetricas {
         this.contadorTerminados = 0;
     }
     
-    /**
-     * Registra un PCB terminado para el cálculo de métricas.
-     * Se llama desde SistemaOperativo.handleDesalojo() cuando un proceso termina.
-     */
     public void agregarPCBTerminado(PCB pcb) {
         if (contadorTerminados < MAX_PROCESOS) {
             pcbsTerminados[contadorTerminados++] = pcb;
         }
     }
     
-    /**
-     * Se llama en cada ciclo de la simulación para rastrear la actividad de la CPU.
-     * @param relojActual El ciclo global actual.
-     * @param estaCPUInactiva True si la CPU no está ejecutando nada.
-     * @param estaCPUEnModoKernel True si el SO está en modo kernel (planificación/dispatch).
-     */
     public void actualizarMetricasGlobales(long relojActual, boolean estaCPUInactiva, boolean estaCPUEnModoKernel) {
         this.ciclosTotales = relojActual;
         if (estaCPUInactiva) {
@@ -51,35 +39,17 @@ public class GestorDeMetricas {
         }
     }
 
-    // =========================================================================
-    // MÉTODOS DE CÁLCULO DE MÉTRICAS FINALES
-    // =========================================================================
-
-    /**
-     * Procesos Completados por unidad de tiempo (Throughput).
-     * @return Throughput en procesos por ciclo
-     */
     public double calcularThroughput() {
         if (ciclosTotales == 0) return 0.0;
         return (double) contadorTerminados / ciclosTotales;
     }
     
-    /**
-     * Utilización del Procesador.
-     * Utilización = (Ciclos Totales - Ciclos Inactivos) / Ciclos Totales
-     * @return Porcentaje de utilización (0.0 a 1.0)
-     */
     public double calcularUtilizacionCPU() {
         if (ciclosTotales == 0) return 0.0;
         long ciclosUtilizados = ciclosTotales - ciclosCPUInactiva;
         return (double) ciclosUtilizados / ciclosTotales;
     }
 
-    /**
-     * Tiempo de Retorno (Turnaround Time) Promedio.
-     * TR = Tiempo de Finalización - Tiempo de Llegada
-     * @return Tiempo de retorno promedio en ciclos
-     */
     public double calcularTiempoDeRetornoPromedio() {
         if (contadorTerminados == 0) return 0.0;
         
@@ -91,11 +61,6 @@ public class GestorDeMetricas {
         return (double) tiempoRetornoTotal / contadorTerminados;
     }
     
-    /**
-     * Tiempo de Espera (Waiting Time) Promedio.
-     * Tiempo acumulado en la Ready Queue.
-     * @return Tiempo de espera promedio en ciclos
-     */
     public double calcularTiempoDeEsperaPromedio() {
         if (contadorTerminados == 0) return 0.0;
         
@@ -106,11 +71,6 @@ public class GestorDeMetricas {
         return (double) tiempoEsperaTotal / contadorTerminados;
     }
     
-    /**
-     * Tiempo de Respuesta (Response Time) Promedio.
-     * TR = Tiempo de Primera Ejecución - Tiempo de Llegada
-     * @return Tiempo de respuesta promedio en ciclos
-     */
     public double calcularTiempoDeRespuestaPromedio() {
         if (contadorTerminados == 0) return 0.0;
         
@@ -129,12 +89,6 @@ public class GestorDeMetricas {
         return (double) tiempoRespuestaTotal / contadorRespondidos;
     }
     
-    /**
-     * Métrica de Equidad (Fairness)
-     * Se calcula usando el Coeficiente de Variación del Tiempo de Retorno.
-     * Un valor cercano a 0.0 indica que el tiempo de ejecución se distribuyó equitativamente.
-     * @return Coeficiente de variación (0.0 = perfectamente equitativo)
-     */
     public double calcularEquidad() {
         if (contadorTerminados <= 1) return 0.0;
 
@@ -151,14 +105,9 @@ public class GestorDeMetricas {
         double varianza = sumaDeDiferenciasCuadradas / contadorTerminados;
         double desviacionEstandar = Math.sqrt(varianza);
         
-        // Coeficiente de Variación (Desviación Estándar / Media)
         return desviacionEstandar / mediaTR;
     }
     
-    /**
-     * NUEVO MÉTODO: Retorna un resumen completo de todas las métricas
-     * Útil para la GUI y para debugging
-     */
     public String obtenerResumenMetricas() {
         StringBuilder sb = new StringBuilder();
         sb.append("=== RESUMEN DE MÉTRICAS ===\n");
@@ -174,9 +123,6 @@ public class GestorDeMetricas {
         return sb.toString();
     }
     
-    /**
-     * NUEVO MÉTODO: Limpia todas las métricas (útil para reiniciar la simulación)
-     */
     public void limpiarMetricas() {
         for (int i = 0; i < contadorTerminados; i++) {
             pcbsTerminados[i] = null;
@@ -187,7 +133,6 @@ public class GestorDeMetricas {
         ciclosKernelCPU = 0;
     }
 
-    // --- Getters para la GUI ---
     public long getCiclosTotales() { return ciclosTotales; }
     public int getContadorTerminados() { return contadorTerminados; }
     public PCB[] getPCBsTerminados() { return pcbsTerminados; }

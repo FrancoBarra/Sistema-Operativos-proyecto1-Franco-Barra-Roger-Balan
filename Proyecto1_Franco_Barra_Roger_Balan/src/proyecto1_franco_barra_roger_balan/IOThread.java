@@ -15,22 +15,14 @@ public class IOThread implements Runnable {
     private volatile boolean isRunning = true;
     private final Object lock = new Object();
 
-    /**
-     * Constructor
-     */
     public IOThread(PCB pcb, SistemaOperativo so) {
         this.pcb = pcb;
         this.sistemaOperativo = so;
     }
     
-    /**
-     * Método run() - Se ejecuta cuando el hilo inicia
-     * Simula el tiempo de espera para operaciones de E/S
-     */
     @Override
     public void run() {
         synchronized(lock) {
-            // Verificar que el proceso esté en estado BLOCKED y tenga ciclos de E/S
             if (pcb.getStatus() != ProcessStatus.BLOCKED || pcb.getCiclosIOEspera() <= 0) {
                 return;
             }
@@ -39,8 +31,7 @@ public class IOThread implements Runnable {
             
             while (isRunning && ciclosRestantesIO > 0) {
                 try {
-                    // Simular el paso del tiempo para la E/S
-                    lock.wait(50); // Pequeña pausa para no consumir muchos recursos
+                    lock.wait(50); 
                     ciclosRestantesIO--;
                     pcb.setCiclosIOEspera(ciclosRestantesIO);
                     
@@ -51,24 +42,19 @@ public class IOThread implements Runnable {
                 }
             }
             
-            // Notificar al SO cuando la E/S termine
             if (isRunning) {
                 sistemaOperativo.processIOCompleted(pcb.getId());
             }
         }
     }
     
-    /**
-     * Detiene la ejecución del hilo de forma controlada
-     */
     public void stopRunning() {
         synchronized(lock) {
             this.isRunning = false;
-            lock.notify(); // Despertar el hilo si está esperando
+            lock.notify(); 
         }
     }
     
-    // Getter para el PCB
     public PCB getPcb() {
         return pcb;
     }
@@ -80,5 +66,7 @@ public class IOThread implements Runnable {
     public void setIsRunning(boolean isRunning) {
         this.isRunning = isRunning;
     }
+    
+    
     
 }
