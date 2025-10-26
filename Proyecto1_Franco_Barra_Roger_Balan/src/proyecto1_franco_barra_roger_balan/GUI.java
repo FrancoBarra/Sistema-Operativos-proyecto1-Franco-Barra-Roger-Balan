@@ -507,6 +507,7 @@ private void actualizarGraficosBarras() {
         txtAreaTerminados.setBackground(new java.awt.Color(204, 204, 204));
         jScrollPane2.setViewportView(txtAreaTerminados);
 
+        txtPaneCPU.setBackground(new java.awt.Color(204, 204, 204));
         jScrollPane4.setViewportView(txtPaneCPU);
 
         jLabel7.setText("CPU");
@@ -696,34 +697,45 @@ private void actualizarGraficosBarras() {
         jPanel2.add(txtRutaCSV, new org.netbeans.lib.awtextra.AbsoluteConstraints(76, 37, 422, 78));
 
         jPanel5.setBackground(new java.awt.Color(99, 128, 169));
+        jPanel5.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         nombre.setText("Ingrese Nombre:");
+        jPanel5.add(nombre, new org.netbeans.lib.awtextra.AbsoluteConstraints(14, 6, -1, -1));
 
         txtNombreProceso.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 txtNombreProcesoActionPerformed(evt);
             }
         });
+        jPanel5.add(txtNombreProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(32, 28, 71, -1));
 
         Instrucciones.setText("Instrucciones");
+        jPanel5.add(Instrucciones, new org.netbeans.lib.awtextra.AbsoluteConstraints(277, 6, 80, -1));
 
         spinnerInstrucciones.setModel(new javax.swing.SpinnerNumberModel(50, 1, null, 1));
+        jPanel5.add(spinnerInstrucciones, new org.netbeans.lib.awtextra.AbsoluteConstraints(277, 28, 80, -1));
 
         tipo.setText("Tipo");
+        jPanel5.add(tipo, new org.netbeans.lib.awtextra.AbsoluteConstraints(522, 6, -1, -1));
 
         cmbTipoProceso.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmbTipoProcesoActionPerformed(evt);
             }
         });
+        jPanel5.add(cmbTipoProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(506, 28, -1, -1));
 
         CiclospExcepcion.setText("Ciclos p/ Excepción:");
+        jPanel5.add(CiclospExcepcion, new org.netbeans.lib.awtextra.AbsoluteConstraints(647, 6, -1, -1));
 
         spinnerCiclosExcep.setModel(new javax.swing.SpinnerNumberModel(0, 0, null, 1));
+        jPanel5.add(spinnerCiclosExcep, new org.netbeans.lib.awtextra.AbsoluteConstraints(653, 28, -1, -1));
 
         jLabel5.setText("Ciclos p/ Satisfacer E/S");
+        jPanel5.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(781, 6, -1, -1));
 
         spinnerCiclosIO.setModel(new javax.swing.SpinnerNumberModel());
+        jPanel5.add(spinnerCiclosIO, new org.netbeans.lib.awtextra.AbsoluteConstraints(819, 28, -1, -1));
 
         btnAnadirProceso.setText("Añadir Proceso");
         btnAnadirProceso.addActionListener(new java.awt.event.ActionListener() {
@@ -731,62 +743,7 @@ private void actualizarGraficosBarras() {
                 btnAnadirProcesoActionPerformed(evt);
             }
         });
-
-        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
-        jPanel5.setLayout(jPanel5Layout);
-        jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel5Layout.createSequentialGroup()
-                .addGap(14, 14, 14)
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(nombre)
-                    .addComponent(txtNombreProceso, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 63, Short.MAX_VALUE)
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
-                        .addComponent(spinnerInstrucciones, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(38, 38, 38))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
-                        .addComponent(Instrucciones, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(30, 30, 30)))
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(jPanel5Layout.createSequentialGroup()
-                        .addComponent(cmbTipoProceso, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(67, 67, 67)
-                        .addComponent(spinnerCiclosExcep, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(86, 86, 86)
-                        .addComponent(spinnerCiclosIO, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(35, 35, 35)
-                        .addComponent(btnAnadirProceso)
-                        .addContainerGap())
-                    .addGroup(jPanel5Layout.createSequentialGroup()
-                        .addComponent(tipo)
-                        .addGap(72, 72, 72)
-                        .addComponent(CiclospExcepcion)
-                        .addGap(35, 35, 35)
-                        .addComponent(jLabel5)
-                        .addGap(122, 122, 122))))
-        );
-        jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel5Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(nombre)
-                    .addComponent(Instrucciones)
-                    .addComponent(tipo)
-                    .addComponent(CiclospExcepcion)
-                    .addComponent(jLabel5))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtNombreProceso, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(spinnerInstrucciones, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cmbTipoProceso, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(spinnerCiclosExcep, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(spinnerCiclosIO, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnAnadirProceso))
-                .addContainerGap(55, Short.MAX_VALUE))
-        );
+        jPanel5.add(btnAnadirProceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(942, 28, -1, -1));
 
         jPanelGraficos.setLayout(new java.awt.BorderLayout());
 
@@ -795,12 +752,10 @@ private void actualizarGraficosBarras() {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 258, Short.MAX_VALUE)
-                        .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jPanelGraficos, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
